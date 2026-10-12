@@ -7,14 +7,14 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="TFIS Game">
+<meta name="apple-mobile-web-app-title" content="TFIF Game">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>html,body{height:100%}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head>
 <body>
-<title>TFIS Game Prototype</title>
+<title>TFIF Game Prototype</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap">
 <style>
 /* Layout: one arcade screen up top, a control strip under it, then two working panels (keys, feel) and the art checklist. */
@@ -93,8 +93,8 @@ tr:last-child td{border-bottom:0}
 
 <main class="wrap">
   <header>
-    <p class="tag">Build 0.10</p>
-    <h1>TFIS Game Prototype</h1>
+    <p class="tag">Build 0.12</p>
+    <h1>TFIF Game Prototype</h1>
     <p class="lede">Pick a character and steer them from the start to the finish flag. The stages never end: each one is a little longer and harder, and your best is the furthest stage you reach. Every fifth stage ends with a trophy and confetti. On a phone it plays full screen with touch buttons.</p>
   </header>
 
@@ -1063,6 +1063,7 @@ function update(dt) {
   for (const p of pops) { p.y -= 16 * dt; p.life -= dt; }
   pops = pops.filter(p => p.life > 0);
 
+  if (FRONT_STATES.includes(G.state)) { G.scroll += 30 * dt; frontUpdate(); return; }
   if (G.state === 'title' || G.state === 'map') { G.scroll += 30 * dt; if (G.mode === 'flyer') P.y = 92 + Math.sin(G.anim * 2.2) * 7; return; }
   if (G.state === 'paused' || G.state === 'fail') return;
   if (G.state === 'win') {
@@ -1098,6 +1099,7 @@ const SONGS = {
   runner: { bpm: 136, key: 60, prog: [0, 7, 9, 5], lead: 'square', leadVol: 0.03, arp: 'square', drums: 1, seed: 7 },
   cool:   { bpm: 124, key: 62, prog: [0, 9, 5, 7], lead: 'triangle', leadVol: 0.06, arp: 'sine', drums: 0.7, seed: 21 },
   flyer:  { bpm: 112, key: 65, prog: [0, 5, 9, 7], lead: 'triangle', leadVol: 0.06, arp: null, drums: 0.6, seed: 33 },
+  splash: { bpm: 150, key: 60, prog: [0, 5, 7, 0], lead: 'square', leadVol: 0.035, arp: 'square', drums: 1, seed: 11 },
   menu:   { bpm: 92,  key: 67, prog: [0, 4, 5, 7], lead: 'sine', leadVol: 0.06, arp: 'triangle', drums: 0, seed: 5 }
 };
 const RHYTHMS = [
@@ -1170,7 +1172,8 @@ function musicUpdate() {
   if (!muted && !document.hidden) {
     const s = G.state;
     if (s === 'play' || s === 'intro' || s === 'clear') want = G.mode === 'runner' ? (G.stage === 'fridge' ? 'cool' : 'runner') : 'flyer';
-    else if (s === 'title' || s === 'map' || (s === 'win' && G.stateT > 3)) want = 'menu';
+    else if (s === 'splash') want = 'splash';
+    else if (s === 'title' || s === 'map' || s === 'modes' || (s === 'win' && G.stateT > 3)) want = 'menu';
   }
   if (want === music.song) return;
   const g = mOut(), now = ac.currentTime;
@@ -1414,7 +1417,7 @@ function fitSelect(c, bw, bh) { const a = c.select.aspect; let h = bh, w = h * a
 function drawSelect(blink) {
   const L = selLayout(), c = CHARS[G.char];
   box(ctx, 'rgba(12,16,40,0.52)', 0, 0, W, H);
-  chip(L.modeChip, G.mode === 'runner' ? 'TRY FLYER' : 'TRY RUNNER');
+  chip(L.modeChip, 'ALL GAMES');
   chip(L.soundChip, muted ? 'SOUND OFF' : 'SOUND ON');
   drawText('CHOOSE YOUR CHARACTER', W / 2, 6, 2, '#ffffff', 1);
   drawText((G.mode === 'runner' ? 'RUNNER' : 'FLYER') + (PR().done ? '   BEST: STAGE ' + PR().done : ''), W / 2, 24, 1, '#ffe14a', 1);
@@ -1482,6 +1485,174 @@ function drawMap() {
   poly(ctx, [L.play.x + 14, L.play.y + 5, L.play.x + 14, L.play.y + 15, L.play.x + 22, L.play.y + 10], '#ffffff');
   drawText('PLAY', L.play.x + L.play.w / 2 + 6, L.play.y + 3.5, 2, '#ffffff', 1);
   drawText(TOUCH ? 'TAP A STAGE, THEN PLAY' : 'LEFT RIGHT  CHOOSE      SPACE  PLAY      C  CHARACTERS', W / 2, 201, 1, '#bfe6ff', 1);
+}
+
+/* =========================================================================
+   Front screens: "press start", the opening show with the whole gang and
+   a jingle, then choosing which game to play.
+   ========================================================================= */
+const SPLASH_END = 3.8;
+const FRONT_STATES = ['gate', 'splash', 'modes'];
+function startSplash() { ensureAudio(); confetti = []; G.boom = false; setState('splash'); }
+function openModes() { confetti = []; G.modeSel = G.mode; setState('modes'); }
+function chooseMode(m) {
+  ensureAudio();
+  if (m !== G.mode) { G.mode = m; syncUI(); save(); }
+  toTitle(); tone(660, 990, 0.08, 'triangle', 0.06);
+}
+function modesLayout() {
+  return {
+    cards: [{ m: 'runner', x: W / 2 - 162, y: 36, w: 152, h: 112 }, { m: 'flyer', x: W / 2 + 10, y: 36, w: 152, h: 112 }],
+    soundChip: { x: W - 66, y: 5, w: 60, h: 13 }
+  };
+}
+function modesTap(gx, gy) {
+  const L = modesLayout();
+  ensureAudio();
+  if (inRect(L.soundChip, gx, gy)) { setMuted(!muted); return; }
+  for (const c of L.cards) if (inRect({ x: c.x, y: c.y, w: c.w, h: c.h + 46 }, gx, gy)) { G.modeSel = c.m; chooseMode(c.m); return; }
+}
+function frontUpdate() {
+  if (G.state === 'splash' && !G.boom && G.stateT > 2.35) {
+    G.boom = true; burst(W / 2 - 60, 70, 60); burst(W / 2 + 60, 70, 60);
+  }
+}
+
+/* Any character, in its select pose or one of its game poses. */
+function drawChar(i, cx, by, bw, bh, sx = 1, sy = 1, rot = 0) {
+  const c = CHARS[i]; if (!c || !c.selImg.complete || !c.selImg.naturalWidth) return;
+  const [w, h] = fitSelect(c, bw, bh);
+  ctx.save(); ctx.translate(cx, by); if (rot) ctx.rotate(rot); ctx.scale(sx, sy);
+  ctx.drawImage(c.selImg, -w * c.select.ax, -h, w, h); ctx.restore();
+}
+function drawCharPose(i, role, cx, by, k = 1, rot = 0) {
+  const c = CHARS[i], p = c && c.imgs[c.poses[role]];
+  if (!p || !p.im.complete || !p.im.naturalWidth) return;
+  ctx.save(); ctx.translate(cx, by); if (rot) ctx.rotate(rot); ctx.scale(k, k);
+  ctx.drawImage(p.im, -p.w * p.ax, -p.h, p.w, p.h); ctx.restore();
+}
+function bigText(s, x, y, px, col, rot = 0) {
+  ctx.save(); ctx.translate(x, y); ctx.rotate(rot);
+  ctx.font = '700 ' + px + 'px "Fredoka","Arial Rounded MT Bold","Trebuchet MS",sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
+  ctx.lineWidth = px * 0.22; ctx.strokeStyle = '#141a33'; ctx.strokeText(s, 0, px * 0.06);
+  ctx.fillStyle = '#141a33'; ctx.fillText(s, 1.6, px * 0.06 + 1.6);
+  ctx.fillStyle = col; ctx.fillText(s, 0, 0);
+  ctx.restore();
+}
+const easeOut = p => 1 - Math.pow(1 - clamp(p, 0, 1), 3);
+const easeBack = p => { p = clamp(p, 0, 1); const s = 1.9; return 1 + (s + 1) * Math.pow(p - 1, 3) + s * Math.pow(p - 1, 2); };
+
+/* Sky, turning sunburst, hills and grass shared by the front screens. */
+function frontBackdrop() {
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#2f6fd6'); g.addColorStop(0.55, '#7cc4f4'); g.addColorStop(1, '#d6f1ff');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  ctx.save(); ctx.translate(W / 2, 74); ctx.rotate(G.anim * 0.12);
+  ctx.fillStyle = 'rgba(255,255,255,0.10)';
+  for (let i = 0; i < 14; i++) { ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, 320, i * TAU / 14, i * TAU / 14 + TAU / 28); ctx.closePath(); ctx.fill(); }
+  ctx.restore();
+  for (const c of clouds) blit(S.cloud[c.k], c.x, c.y);
+  layer(farLayer, G.scroll * 0.08, 184 - 110);
+  layer(midLayer, G.scroll * 0.3, 184 - 70);
+  for (let x = -snap(G.scroll % groundTile.lw); x < W; x += groundTile.lw) ctx.drawImage(groundTile, x, 184, groundTile.lw, groundTile.lh);
+}
+const slotX = s => W / 2 + (s - (CHARS.length - 1) / 2) * 35;
+
+function drawGate(blink) {
+  frontBackdrop();
+  box(ctx, 'rgba(12,16,40,0.42)', 0, 0, W, H);
+  /* the gang peeks up from behind the grass */
+  ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, 186); ctx.clip();
+  for (let s = 0; s < CHARS.length; s++) {
+    const peek = 10 + Math.max(0, Math.sin(G.anim * 1.6 + s * 1.3)) * 16;
+    drawChar(s, slotX(s), 186 + 30 - peek, 32, 40);
+  }
+  ctx.restore();
+  const r = 24 + Math.sin(G.anim * 4) * 1.6;
+  circ(ctx, W / 2, 88, r + 7, 'rgba(60,207,110,0.25)');
+  circ(ctx, W / 2, 88, r, '#3ccf6e', '#141a33', 1.6);
+  poly(ctx, [W / 2 - 7, 76, W / 2 - 7, 100, W / 2 + 12, 88], '#ffffff', '#141a33', 1);
+  drawText(TOUCH ? 'TAP TO START' : 'PRESS SPACE TO START', W / 2, 124, 2, blink ? '#ffffff' : '#ffe14a', 1);
+}
+
+function drawSplash(blink) {
+  const t = G.stateT, n = CHARS.length;
+  frontBackdrop();
+  for (let s = n - 1; s >= 0; s--) {
+    const t0 = 0.2 + (n - 1 - s) * 0.13, p = (t - t0) / 1.0, x1 = slotX(s);
+    if (p <= 0) continue;
+    if (p < 1) {   /* running in from the left */
+      const x = -30 + (x1 + 30) * easeOut(p), hop = Math.abs(Math.sin(t * 15 + s)) * 3;
+      drawCharPose(s, 'run', x, 184 - hop, 1.15, Math.sin(t * 15 + s) * 0.08);
+    } else {   /* arrived: a little landing squash, then the wave */
+      const a = t - t0 - 1, sq = a < 0.22 ? Math.sin(a / 0.22 * Math.PI) * 0.16 : 0;
+      let h = 0;
+      if (t > 2.6) { const ph = ((t - 2.6) * 1.4 - s * 0.11) % 1.8; if (ph > 0 && ph < 0.4) h = Math.sin(ph / 0.4 * Math.PI) * 11; }
+      ell(ctx, x1, 184.8, 11 - h * 0.4, 1.6, 'rgba(20,26,51,0.25)');
+      drawChar(s, x1, 184 - h, 33, 42, 1 + sq, 1 - sq);
+    }
+  }
+  if (t > 1.9) {   /* the title drops in with a bounce */
+    const y = -40 + (58 + 40) * easeBack((t - 1.9) / 0.7), wob = Math.sin(G.anim * 2.2) * 0.025;
+    bigText('TFIF', W / 2, y, 56, '#ffe14a', wob);
+  }
+  if (t > 2.5) {
+    ctx.globalAlpha = clamp((t - 2.5) * 3, 0, 1);
+    rr(ctx, W / 2 - 84, 96, 168, 18, 9, '#ff6b4a', '#141a33', 1.2);
+    drawText('THE FRIDGE IS FULL', W / 2, 98.5, 2, '#ffffff', 1);
+    ctx.globalAlpha = 1;
+  }
+  drawConfetti();
+  if (t > SPLASH_END) drawText(TOUCH ? 'TAP TO START' : 'PRESS SPACE TO START', W / 2, 198, 2, blink ? '#ffffff' : '#ffe14a', 1);
+  if (t < 0.45) box(ctx, 'rgba(12,16,40,' + (1 - t / 0.45).toFixed(3) + ')', 0, 0, W, H);
+}
+
+function drawModeCard(c, on) {
+  const pop = on ? 1.04 + Math.sin(G.anim * 4) * 0.012 : 1, cx = c.x + c.w / 2, cy = c.y + c.h / 2;
+  ctx.save(); ctx.translate(cx, cy); ctx.scale(pop, pop); ctx.translate(-cx, -cy);
+  if (on) rr(ctx, c.x - 4, c.y - 4, c.w + 8, c.h + 8, 12, 'rgba(255,225,74,0.35)');
+  clipped(ctx, () => pathRR(ctx, c.x, c.y, c.w, c.h, 9), () => {
+    if (c.m === 'runner') {
+      box(ctx, '#d98d4f', c.x, c.y, c.w, c.h);
+      ctx.drawImage(kitchenWall, c.x - 20 - (G.anim * 6 % 40), c.y - 10, kitchenWall.lw * 0.75, kitchenWall.lh * 0.75);
+      const k = 0.75, tw = kitchenCounter.lw * k, off = (G.anim * 40) % tw;
+      for (let x = c.x - off; x < c.x + c.w; x += tw) ctx.drawImage(kitchenCounter, x, c.y + c.h - 26, tw, kitchenCounter.lh * k);
+      const hop = Math.abs(Math.sin(G.anim * 7)) * 3;
+      ctx.save(); ctx.translate(cx, c.y + c.h - 26); drawCharPose(G.char, 'run', 0, -hop, 1.5, Math.sin(G.anim * 7) * 0.06); ctx.restore();
+    } else {
+      const g = ctx.createLinearGradient(0, c.y, 0, c.y + c.h); g.addColorStop(0, '#3f86e8'); g.addColorStop(1, '#bfe6ff');
+      ctx.fillStyle = g; ctx.fillRect(c.x, c.y, c.w, c.h);
+      circ(ctx, c.x + c.w - 26, c.y + 22, 10, '#ffe066'); circ(ctx, c.x + c.w - 26, c.y + 22, 15, 'rgba(255,246,200,0.35)');
+      for (let i = 0; i < 3; i++) blit(S.cloud[i % 2], c.x + ((i * 70 - G.anim * 14) % (c.w + 60) + c.w + 60) % (c.w + 60) - 40, c.y + 12 + i * 22);
+      ctx.drawImage(midLayer, c.x - (G.anim * 18 % 200), c.y + c.h - 52, midLayer.lw * 0.8, midLayer.lh * 0.8);
+      const py = cy - 4 + Math.sin(G.anim * 2.4) * 6, f = S.plane[(G.anim * 20 | 0) % 2];
+      ctx.save(); ctx.translate(cx, py); ctx.scale(1.5, 1.5); ctx.rotate(Math.cos(G.anim * 2.4) * 0.12);
+      const p = CHARS[G.char].imgs[CHARS[G.char].poses.run];
+      if (p && p.im.complete && p.im.naturalWidth) { const k = 15 / p.h; ctx.drawImage(p.im, 4 - p.w * k * p.ax, 2 - p.h * k, p.w * k, p.h * k); }
+      ctx.drawImage(f, -15, -9, f.lw, f.lh); ctx.restore();
+    }
+  });
+  rr(ctx, c.x, c.y, c.w, c.h, 9, null, on ? '#ffe14a' : 'rgba(255,255,255,0.7)', on ? 2.6 : 1.2);
+  ctx.restore();
+  const pr = G.prog[c.m];
+  drawText(c.m === 'runner' ? 'RUNNER' : 'FLYER', cx, c.y + c.h + 7, 3, on ? '#ffe14a' : '#ffffff', 1);
+  drawText(c.m === 'runner' ? 'RUN, JUMP AND CLIMB' : 'FLY BETWEEN THE TOWERS', cx, c.y + c.h + 29, 1, '#ffffff', 1);
+  if (pr.done) drawText('BEST: STAGE ' + pr.done, cx, c.y + c.h + 40, 1, '#ffe14a', 1);
+}
+function drawModes(blink) {
+  const L = modesLayout();
+  frontBackdrop();
+  box(ctx, 'rgba(12,16,40,0.4)', 0, 0, W, H);
+  chip(L.soundChip, muted ? 'SOUND OFF' : 'SOUND ON');
+  drawText('CHOOSE YOUR GAME', W / 2, 9, 3, '#ffffff', 1);
+  for (const c of L.cards) drawModeCard(c, c.m === G.modeSel);
+  drawText(TOUCH ? 'TAP A GAME TO PLAY' : 'LEFT RIGHT  CHOOSE      SPACE  GO', W / 2, 204, 1, blink ? '#ffffff' : '#bfe6ff', 1);
+}
+function drawFront(blink) {
+  if (G.state === 'gate') drawGate(blink);
+  else if (G.state === 'splash') drawSplash(blink);
+  else drawModes(blink);
 }
 
 function drawHUD() {
@@ -1553,6 +1724,7 @@ function render() {
   const w = phase(runner ? 0 : LVL.sky);
   ctx.setTransform(SS, 0, 0, SS, 0, 0);
   ctx.clearRect(0, 0, W, H);
+  if (FRONT_STATES.includes(G.state)) { drawFront(blink); return; }
   ctx.save();
   if (G.shake > 0 && !reduceMotion && G.state !== 'paused') ctx.translate(rint(-1, 1), rint(-1, 1));
 
@@ -1643,7 +1815,10 @@ function drawTouchPads() {
 function goUp() {
   ensureAudio();
   const s = G.state;
-  if (s === 'title') { openMap(); tone(660, 990, 0.08, 'triangle', 0.06); }
+  if (s === 'gate') startSplash();
+  else if (s === 'splash') { if (G.stateT < SPLASH_END) G.stateT = SPLASH_END; else openModes(); }
+  else if (s === 'modes') chooseMode(G.modeSel || G.mode);
+  else if (s === 'title') { openMap(); tone(660, 990, 0.08, 'triangle', 0.06); }
   else if (s === 'map') startLevel(G.sel);
   else if (s === 'clear') { if (G.stateT > 0.8 && G.n % MILESTONE !== 0) startLevel(G.n + 1); }
   else if (s === 'win') { if (G.stateT > 2.5) startLevel(G.n + 1); }
@@ -1670,7 +1845,7 @@ function selectTap(gx, gy) {
   for (let i = 0; i < L.thumbs.length; i++) if (inRect(L.thumbs[i], gx, gy)) { setChar(i); return; }
   if (inRect(L.prev, gx, gy)) { setChar(G.char - 1); return; }
   if (inRect(L.next, gx, gy)) { setChar(G.char + 1); return; }
-  if (inRect(L.modeChip, gx, gy)) { setMode(G.mode === 'runner' ? 'flyer' : 'runner'); return; }
+  if (inRect(L.modeChip, gx, gy)) { openModes(); return; }
   if (inRect(L.soundChip, gx, gy)) { setMuted(!muted); return; }
   goUp();
 }
@@ -1690,9 +1865,10 @@ window.addEventListener('keydown', e => {
   if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
   if (e.metaKey || e.ctrlKey || e.altKey) return;
   const k = e.key, onBtn = tag === 'BUTTON', act = KEYMAP[k];
-  if ((G.state === 'title' || G.state === 'map') && !onBtn && (act === 'left' || act === 'right')) {
+  if ((G.state === 'title' || G.state === 'map' || G.state === 'modes') && !onBtn && (act === 'left' || act === 'right')) {
     const d = act === 'left' ? -1 : 1;
-    if (G.state === 'title') pickChar(d); else pickStage(G.sel + d);
+    if (G.state === 'modes') { ensureAudio(); const m = d < 0 ? 'runner' : 'flyer'; if (m !== G.modeSel) { G.modeSel = m; tone(520, 700, 0.06, 'triangle', 0.06); } }
+    else if (G.state === 'title') pickChar(d); else pickStage(G.sel + d);
     e.preventDefault(); return;
   }
   if (act === 'up' && !(onBtn && (k === ' ' || k === 'Spacebar'))) { if (!e.repeat) goUp(); keys.up = true; }
@@ -1705,6 +1881,7 @@ window.addEventListener('keydown', e => {
   else if (k === '2') setMode('flyer');
   else if (k === 'c' || k === 'C' || k === 'Escape') {
     if (G.state === 'map') toTitle();
+    else if (G.state === 'title') openModes();
     else if (G.state === 'paused' || G.state === 'fail' || G.state === 'clear' || (G.state === 'win' && G.stateT > 1)) openMap();
     else return;
   }
@@ -1731,6 +1908,8 @@ cv.addEventListener('pointerdown', e => {
   try { cv.setPointerCapture(e.pointerId); } catch (err) {}
   const [gx, gy] = canvasXY(e);
   ensureAudio();
+  if (G.state === 'gate' || G.state === 'splash') { goUp(); return; }
+  if (G.state === 'modes') { modesTap(gx, gy); return; }
   if (G.state === 'title') { selectTap(gx, gy); return; }
   if (G.state === 'map') { mapTap(gx, gy); return; }
   if ((G.state === 'paused' || G.state === 'fail') && gy > 132 && gy < 148 && Math.abs(gx - W / 2) < 90) { openMap(); return; }
@@ -1840,7 +2019,7 @@ function frame(t) {
   if (n === 6) acc = 0;
   render();
   musicUpdate();
-  if (TOUCH) document.body.classList.toggle('playing', G.state !== 'title' && G.state !== 'map');
+  if (TOUCH) document.body.classList.toggle('playing', !['title', 'map', 'gate', 'splash', 'modes'].includes(G.state));
   requestAnimationFrame(frame);
 }
 function boot(d) {
@@ -1848,7 +2027,7 @@ function boot(d) {
   try { document.fonts.load('700 16px "Fredoka"'); document.fonts.load('600 16px "Fredoka"'); } catch (e) {}
   for (let i = 0; i < 6; i++) clouds.push({ x: rnd(0, W), y: rnd(8, 78), k: i % 2 });
   G.focus = document.hasFocus();
-  reset(); syncUI(); fitStage();
+  reset(); setState('gate'); syncUI(); fitStage();
   requestAnimationFrame(t => { last = t / 1000; requestAnimationFrame(frame); });
 }
 window.__tfis = { G, T, keys, music, get P() { return P; }, get obs() { return obs; }, get plats() { return plats; }, get ens() { return ens; }, get coins() { return coins; }, get LVL() { return LVL; } };
