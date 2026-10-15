@@ -93,7 +93,7 @@ tr:last-child td{border-bottom:0}
 
 <main class="wrap">
   <header>
-    <p class="tag">Build 0.30</p>
+    <p class="tag">Build 0.31</p>
     <h1>TFIF Game Prototype</h1>
     <p class="lede">Pick a character and steer them from the start to the finish flag. The stages never end: each one is a little longer and harder, and your best is the furthest stage you reach. Every fifth stage ends with a trophy and confetti. On a phone it plays full screen with touch buttons.</p>
   </header>
@@ -1012,15 +1012,15 @@ function buildRunner(n) {
 /* --------------------------- Flyer stage settings -------------------------- */
 const flyLevel = n => ({
   len: Math.round(Math.min(5000, 1500 + 160 * (n - 1))),
-  speed: Math.min(150, 86 + 4 * (n - 1)),
-  maxH: Math.min(134, 62 + 6 * (n - 1)),
+  speed: Math.min(122, 74 + 3 * (n - 1)),   /* gentler: easy enough for kids, still a challenge later */
+  maxH: Math.min(112, 56 + 5 * (n - 1)),
   blimps: n >= 2, moths: n >= 4, targets: n >= 3,
   sky: [0, 0, 0.1, 0.2, 0.43, 0.48, 0.62, 0.75, 0.95, 0.98][(n - 1) % 10]
 });
 
 function reset() {
   obs = []; plats = []; coins = []; ens = []; parts = []; pops = [];
-  G.dist = 0; G.coins = 0; G.lost = 0; G.hearts = 3; G.shake = 0; G.freeze = 0; G.slowT = 0; G.thr = 1; upBuf = 0; downBuf = 0; G.steerY = null; gateCount = 2;
+  G.dist = 0; G.coins = 0; G.lost = 0; G.hearts = 3; G.shake = 0; G.freeze = 0; G.slowT = 0; G.thr = 1; upBuf = 0; downBuf = 0; G.steerY = null; G.stick = null; G.tapFire = false; gateCount = 2;
   if (G.mode === 'runner') {
     G.stage = bgFor(G.n); G.scene = sceneFor(G.n);
     LVL = buildRunner(G.n);
@@ -1030,7 +1030,7 @@ function reset() {
     G.cam = 0; G.camY = 0; G.scroll = 0;
   } else {
     LVL = flyLevel(G.n); G.stage = bgFor(G.n); G.scene = sceneFor(G.n); G.fzone = FZ_ORDER[(G.n - 1) % FZ_ORDER.length]; G.scroll = 0; lastBase = lastHang = null;
-    P = { x: 76, y: 92, vy: 0, inv: 0, rot: 0 }; spawnIn = 200; blimpIn = 520; lastH = 50; shots = []; fireCD = 0; shotHint = G.n === 2; gateHint = G.n === 3;
+    P = { x: 76, y: 92, vy: 0, inv: 0, rot: 0 }; spawnIn = 200; blimpIn = 900; lastH = 50; shots = []; fireCD = 0; shotHint = G.n === 2; gateHint = G.n === 3;
   }
 }
 function setState(s) { G.state = s; G.stateT = 0; }
@@ -1260,9 +1260,9 @@ function spawnBuilding() {
   if (G.n === 1 && !obs.length && G.dist < 400) o.hint = 'FLY UP!';
   obs.push(o);
   /* something hangs from above, so the plane has to thread the gap */
-  const d = diff(G.n), corridor = Math.max(62, 106 - 40 * d), cb = o.y - corridor;
+  const d = diff(G.n), corridor = Math.max(84, 122 - 34 * d), cb = o.y - corridor;
   const hp = Z.hang.filter(hasHang);
-  if (cb > 22 && hp.length) {
+  if (cb > 22 && hp.length && Math.random() < 0.3 + 0.45 * d) {   /* not every pile has something hanging over it */
     const hid = pick(hp, lastHang); lastHang = hid;
     const art = FLY2.hang[hid] || FLYART.items[hid], ratio = art.w / art.h;
     const ih = FNAT[hid] * (hid === 'hood' ? 1.3 : 1.25), iw = ih * ratio, cx = x + dw / 2;   /* full size: the top can run off the screen */
@@ -1277,7 +1277,7 @@ function spawnBuilding() {
   /* from stage 3, now and then a target blocks the gap: shoot it until it breaks, then fly through */
   let gated = false;
   if (L.targets && --gateCount <= 0) {
-    gateCount = rint(3, 4);
+    gateCount = rint(4, 6);
     const hangO = obs[obs.length - 1].t === 'hang' && obs[obs.length - 1].x < x + dw ? obs[obs.length - 1] : null;
     const gTop = hangO ? hangO.h : 8, gBot = o.y, gh = gBot - gTop;
     if (gh > 40) {
@@ -1287,7 +1287,7 @@ function spawnBuilding() {
       obs.push(tg); gated = true;
     }
   }
-  const gap = (L.speed * (1.0 - 0.35 * d) + 40 + Math.random() * (70 - 30 * d)) * T.spacing;
+  const gap = (L.speed * (1.0 - 0.3 * d) + 110 + Math.random() * (80 - 30 * d)) * T.spacing;   /* more room between piles */
   const sy = clamp(rnd(60, 150), 40, 200 - tall - 26);
   for (let i = 0; i < 3; i++) coins.push({ x: x + dw + gap / 2 - 16 + i * 12, y: sy + Math.sin(i * 1.6) * 6 });
   spawnIn = dw + gap;
@@ -1296,7 +1296,11 @@ function spawnBuilding() {
 function updFlyer(dt) {
   const gy = 200, playing = G.state === 'play';
   if (G.slowT > 0) G.slowT -= dt;
-  const want = playing ? 1 + 0.45 * ((keys.right ? 1 : 0) - (keys.left ? 1 : 0)) : 1;
+  let want = 1;
+  if (playing) {
+    if (G.stick) { const sx = clamp(G.stick.dx / 28, -1, 1); want = 1 + (sx < 0 ? 0.6 : 0.35) * sx; }   /* phone: joystick left / right */
+    else want = 1 + (keys.right ? 0.35 : 0) - (keys.left ? 0.6 : 0);   /* slowing down is stronger, to give time to aim */
+  }
   G.thr += (want - G.thr) * Math.min(1, dt * 4);
   const end = G.state === 'clear' ? Math.max(0, 1 - G.stateT / 1.2) : 1;
   G.speed = LVL.speed * T.speed * G.thr * (G.slowT > 0 ? 0.6 : 1) * end;
@@ -1307,7 +1311,7 @@ function updFlyer(dt) {
      on a phone the plane follows your finger up and down */
   let vwant = 0;
   if (playing) {
-    if (G.steerY != null) vwant = clamp((G.steerY - P.y) * 5, -150, 150);
+    if (G.stick) { const sy = G.stick.dy, dz = Math.abs(sy) < 4 ? 0 : sy - Math.sign(sy) * 4; vwant = clamp(dz * 5, -130, 130); }
     else vwant = ((keys.down ? 1 : 0) - (keys.up ? 1 : 0)) * 125 * T.power;
   }
   P.vy += (vwant - P.vy) * Math.min(1, dt * 9); P.y += P.vy * dt;
@@ -1331,13 +1335,14 @@ function updFlyer(dt) {
         o.y0 = y;
         if (shotHint) { o.hint = 'SHOOT IT!'; shotHint = false; }
         obs.push(o);
-        blimpIn = rnd(380, 700) * (1 - 0.45 * d);
+        blimpIn = rnd(1000, 1600) * (1 - 0.3 * d);   /* fewer critters */
       } else blimpIn = 120;
     }
   }
   /* firing: a blob of the pilot's own sauce colour, while the fire button is held */
   if (fireCD > 0) fireCD -= dt;
-  if (playing && keys.fire && fireCD <= 0) {
+  if (playing && (keys.fire || G.tapFire) && fireCD <= 0) {
+    G.tapFire = false;
     fireCD = 0.22; const a = P.rot;
     shots.push({ x: P.x + 20 * Math.cos(a), y: P.y + 20 * Math.sin(a) - 1, vx: 330 * Math.cos(a), vy: 330 * Math.sin(a), life: 1.4 });
     sfx.pew();
@@ -1877,9 +1882,9 @@ function hintSub(kind) {
   if (kind === 'duck') return TOUCH ? 'TAP THE DOWN BUTTON' : 'PRESS DOWN';
   if (kind === 'stomp') return 'LAND ON TOP OF IT';
   if (kind === 'ride') return 'STEP ON WHEN IT COMES CLOSE';
-  if (kind === 'fly') return TOUCH ? 'DRAG YOUR FINGER UP' : 'PRESS UP';
-  if (kind === 'shoot') return TOUCH ? 'HOLD THE RED FIRE BUTTON' : 'HOLD X TO FIRE';
-  if (kind === 'target') return TOUCH ? 'FIRE TO BREAK IT' : 'PRESS X TO BREAK IT';
+  if (kind === 'fly') return TOUCH ? 'LEFT SIDE: DRAG UP' : 'PRESS UP';
+  if (kind === 'shoot') return TOUCH ? 'TAP THE RIGHT SIDE' : 'HOLD X TO FIRE';
+  if (kind === 'target') return TOUCH ? 'TAP THE RIGHT SIDE' : 'PRESS X TO BREAK IT';
   return TOUCH ? 'TAP THE JUMP BUTTON' : 'PRESS SPACE OR UP';
 }
 function drawSign(cx, top, text, sub) {   /* a glossy speech bubble */
@@ -2746,7 +2751,8 @@ function drawTouchPads() {
     if (p.flyer && runner) continue;
     if (!runner && !p.flyer) continue;   /* in the Flyer only the fire button shows */
     const on = keys[p.id], r = 17;
-    if (p.id === 'fire') { ctx.globalAlpha = on ? 0.95 : 0.75; glossCircle(p.x, p.y, r, 'red', on); ctx.globalAlpha = 1; circ(ctx, p.x, p.y, 5.5, null, '#ffffff', 1.4); line(ctx, p.x - 9, p.y, p.x + 9, p.y, '#ffffff', 1.2); line(ctx, p.x, p.y - 9, p.x, p.y + 9, '#ffffff', 1.2); drawText('FIRE', p.x, p.y - 30, 1, 'rgba(255,255,255,0.85)', 1); continue; }
+    if (p.id === 'fire') { if (G.stick) { const k = G.stick, kx = k.ax + clamp(k.dx, -22, 22), ky = k.ay + clamp(k.dy, -22, 22); circ(ctx, k.ax, k.ay, 24, 'rgba(255,255,255,0.12)', 'rgba(255,255,255,0.5)', 1); circ(ctx, kx, ky, 10, 'rgba(255,255,255,0.45)', '#ffffff', 1); }
+      ctx.globalAlpha = on ? 0.95 : 0.75; glossCircle(p.x, p.y, r, 'red', on); ctx.globalAlpha = 1; circ(ctx, p.x, p.y, 5.5, null, '#ffffff', 1.4); line(ctx, p.x - 9, p.y, p.x + 9, p.y, '#ffffff', 1.2); line(ctx, p.x, p.y - 9, p.x, p.y + 9, '#ffffff', 1.2); drawText('TAP RIGHT SIDE', p.x, p.y - 30, 1, 'rgba(255,255,255,0.85)', 1); continue; }
     ctx.globalAlpha = on ? 0.95 : 0.7; glossCircle(p.x, p.y, r, p.id === 'up' || p.id === 'down' ? 'orange' : 'blue', on); ctx.globalAlpha = 1;
     const a = { left: Math.PI, right: 0, up: -Math.PI / 2, down: Math.PI / 2 }[p.id];
     const pts = [[7, 0], [-4, -6], [-4, 6]].flatMap(([dx, dy]) => [p.x + dx * Math.cos(a) - dy * Math.sin(a), p.y + dx * Math.sin(a) + dy * Math.cos(a)]);
@@ -2853,7 +2859,7 @@ window.addEventListener('focus', () => { G.focus = true; });
 /* Touch: each finger holds one of the four buttons, and can slide from one
    to another (say from left to right) without lifting. */
 const fingers = new Map();
-function syncFingers() { keys.up = keys.down = keys.left = keys.right = keys.fire = false; let st = false; for (const v of fingers.values()) { if (v === 'steer') st = true; else if (v) keys[v] = true; } if (!st) G.steerY = null; }
+function syncFingers() { keys.up = keys.down = keys.left = keys.right = keys.fire = false; let st = false; for (const v of fingers.values()) { if (v === 'stick') st = true; else if (v) keys[v] = true; } if (!st) G.stick = null; }
 function padAt(gx, gy) {
   let best = null, bd = 30;
   for (const p of PADS) { if (p.flyer && G.mode !== 'flyer') continue; const d = Math.hypot(gx - p.x, gy - p.y); if (d < bd) { bd = d; best = p.id; } }
@@ -2878,10 +2884,9 @@ cv.addEventListener('pointerdown', e => {
   if (gy < 26 && gx > W - 30) { togglePause(); return; }
   if (!TOUCH && e.pointerType === 'mouse' && G.mode !== 'flyer') { goUp(); return; }   /* a mouse click jumps */
   if (e.pointerType === 'mouse' && G.mode === 'flyer') { fingers.set(e.pointerId, 'fire'); syncFingers(); return; }   /* a mouse click fires */
-  if (G.mode === 'flyer') {   /* the fire button, or steer with the finger */
-    const fp = PADS.find(p => p.id === 'fire');
-    if (Math.hypot(gx - fp.x, gy - fp.y) < 30) { fingers.set(e.pointerId, 'fire'); syncFingers(); return; }
-    fingers.set(e.pointerId, 'steer'); G.steerY = gy; syncFingers(); return;
+  if (G.mode === 'flyer') {   /* right half: tap (or hold) to fire. Left half: a joystick: up/down steers, left/right slows/speeds */
+    if (gx > W / 2) { fingers.set(e.pointerId, 'fire'); fireCD = 0; G.tapFire = true; syncFingers(); return; }
+    fingers.set(e.pointerId, 'stick'); G.stick = { ax: gx, ay: gy, dx: 0, dy: 0 }; syncFingers(); return;
   }
   const id = padAt(gx, gy);
   fingers.set(e.pointerId, id); syncFingers();
@@ -2889,7 +2894,7 @@ cv.addEventListener('pointerdown', e => {
 });
 cv.addEventListener('pointermove', e => {
   if (!fingers.has(e.pointerId)) return;
-  if (fingers.get(e.pointerId) === 'steer') { G.steerY = canvasXY(e)[1]; return; }
+  if (fingers.get(e.pointerId) === 'stick' && G.stick) { const [mx, my] = canvasXY(e); G.stick.dx = mx - G.stick.ax; G.stick.dy = my - G.stick.ay; return; }
   const [gx, gy] = canvasXY(e), id = padAt(gx, gy), was = fingers.get(e.pointerId);
   if (id !== was && (id === 'left' || id === 'right') && (was === 'left' || was === 'right')) { fingers.set(e.pointerId, id); syncFingers(); }
 });
@@ -2998,7 +3003,7 @@ function boot(d) {
   reset(); G.landed = {}; G.boom = false; G.introSel = 0; setState('splash'); syncUI(); fitStage();
   requestAnimationFrame(t => { last = t / 1000; requestAnimationFrame(frame); });
 }
-window.__tfis = { G, T, keys, music, drawRun, CHARS, buildRunner, startLevel, get track() { return track.name; }, get P() { return P; }, get obs() { return obs; }, get plats() { return plats; }, get ens() { return ens; }, get coins() { return coins; }, get LVL() { return LVL; } };
+window.__tfis = { get shots() { return shots; },  G, T, keys, music, drawRun, CHARS, buildRunner, startLevel, get track() { return track.name; }, get P() { return P; }, get obs() { return obs; }, get plats() { return plats; }, get ens() { return ens; }, get coins() { return coins; }, get LVL() { return LVL; } };
 boot({});
 })();
 </script>
