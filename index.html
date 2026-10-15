@@ -93,7 +93,7 @@ tr:last-child td{border-bottom:0}
 
 <main class="wrap">
   <header>
-    <p class="tag">Build 0.26</p>
+    <p class="tag">Build 0.28</p>
     <h1>TFIF Game Prototype</h1>
     <p class="lede">Pick a character and steer them from the start to the finish flag. The stages never end: each one is a little longer and harder, and your best is the furthest stage you reach. Every fifth stage ends with a trophy and confetti. On a phone it plays full screen with touch buttons.</p>
   </header>
@@ -126,12 +126,13 @@ tr:last-child td{border-bottom:0}
         <dt><kbd>←</kbd> <kbd>→</kbd></dt>
         <dd><b>Runner:</b> walk backwards and forwards.<br><b>Flyer:</b> slow down or speed up.</dd>
         <dt><kbd>↑</kbd> <kbd>Space</kbd></dt>
-        <dd><b>Runner:</b> jump. Hold it for a higher jump. Land on beetles and bats to squash them.<br><b>Flyer:</b> climb. Pots and pans hang over every pile on the counter, so fly through the gap between them.</dd>
+        <dd><b>Runner:</b> jump. Hold it for a higher jump. Land on beetles and bats to squash them.<br><b>Flyer:</b> steer up (on a phone, drag your finger up and down).</dd>
         <dt><kbd>↓</kbd></dt>
-        <dd><b>Runner:</b> duck. Hold it and walk to crawl. On a shelf it drops you down through.<br><b>Flyer:</b> dive.</dd>
+        <dd><b>Runner:</b> duck. Hold it and walk to crawl. On a shelf it drops you down through.<br><b>Flyer:</b> steer down.</dd>
         <dt><kbd>P</kbd></dt><dd>Pause</dd>
         <dt><kbd>C</kbd></dt><dd>Stage map</dd>
         <dt><kbd>M</kbd></dt><dd>Music and sound on or off</dd>
+        <dt><kbd>X</kbd></dt><dd><b>Flyer:</b> fire (or click, or the red button on a phone). Shoot flies and moths for stars, and break the targets that block the way.</dd>
         <dt><kbd>1</kbd> <kbd>2</kbd></dt><dd>Switch to Runner or Flyer</dd>
         <dt>Phone</dt><dd>Two arrow buttons bottom left, duck and jump bottom right, pause top right.</dd>
       </dl>
@@ -203,7 +204,7 @@ ctx.lineJoin = 'round'; ctx.lineCap = 'round';
 const reduceMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 const KEY = 'tfis-proto-v1';
 /* Phones and tablets get the full-screen layout and touch pads. #touch in the link forces it, for testing on a computer. */
-const TOUCH = location.hash === '#touch' || !!(window.matchMedia && matchMedia('(hover: none) and (pointer: coarse)').matches);
+let TOUCH = location.hash === '#touch' || !!(window.matchMedia && (matchMedia('(hover: none) and (pointer: coarse)').matches || matchMedia('(any-pointer: coarse)').matches)) || (navigator.maxTouchPoints > 0 && 'ontouchstart' in window);
 if (TOUCH) document.body.classList.add('touch');
 
 const rnd = (a, b) => a + Math.random() * (b - a);
@@ -844,7 +845,11 @@ function tone(f0, f1, dur, type, vol, delay = 0) {
     o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + dur + 0.02);
   } catch (e) {}
 }
+const SHOT_COL = { ketchup: '#e8302a', sriracha: '#ff4a1f', mustard: '#ffd21f', cheese: '#ffc93a', carrot: '#ff8a1f', lasagna: '#e8602a', avocado: '#8fd64a', pickle: '#6cbf3a', mayo: '#fff6dc', milk: '#ffffff' };
+const shotCol = () => SHOT_COL[CHARS[G.char].key] || '#ff6b4a';
 const sfx = {
+  pew: () => { tone(880, 440, 0.07, 'square', 0.025); },
+  splat: () => { tone(220, 90, 0.09, 'triangle', 0.06); },
   start: () => { tone(523, 523, 0.08, 'square', 0.04); tone(784, 784, 0.14, 'square', 0.04, 0.08); },
   jump: () => tone(330, 660, 0.13, 'square', 0.035),
   coin: () => { tone(988, 988, 0.06, 'square', 0.035); tone(1319, 1319, 0.12, 'square', 0.035, 0.06); },
@@ -880,7 +885,7 @@ const G = { mode: 'runner', state: 'title', stateT: 0, char: 0, stage: 'kitchen'
             hearts: 3, slowT: 0, shake: 0, freeze: 0, focus: true, confT: 0, thr: 1,
             prog: { runner: { done: 0, stars: {} }, flyer: { done: 0, stars: {} } } };
 let P = null, LVL = null, obs = [], plats = [], coins = [], ens = [], parts = [], pops = [], clouds = [], confetti = [];
-let spawnIn = 0, blimpIn = 0, lastH = 60, upBuf = 0, downBuf = 0;
+let spawnIn = 0, blimpIn = 0, lastH = 60, upBuf = 0, downBuf = 0, shots = [], fireCD = 0, shotHint = false, gateCount = 2, gateHint = false;
 const keys = { up: false, down: false, left: false, right: false };
 const groundY = () => G.mode === 'runner' ? 184 : 200;
 /* The Runner camera is zoomed in, so the characters read bigger against the
@@ -1009,13 +1014,13 @@ const flyLevel = n => ({
   len: Math.round(Math.min(5000, 1500 + 160 * (n - 1))),
   speed: Math.min(150, 86 + 4 * (n - 1)),
   maxH: Math.min(134, 62 + 6 * (n - 1)),
-  blimps: n >= 4,
+  blimps: n >= 2, moths: n >= 4, targets: n >= 3,
   sky: [0, 0, 0.1, 0.2, 0.43, 0.48, 0.62, 0.75, 0.95, 0.98][(n - 1) % 10]
 });
 
 function reset() {
   obs = []; plats = []; coins = []; ens = []; parts = []; pops = [];
-  G.dist = 0; G.coins = 0; G.lost = 0; G.hearts = 3; G.shake = 0; G.freeze = 0; G.slowT = 0; G.thr = 1; upBuf = 0; downBuf = 0;
+  G.dist = 0; G.coins = 0; G.lost = 0; G.hearts = 3; G.shake = 0; G.freeze = 0; G.slowT = 0; G.thr = 1; upBuf = 0; downBuf = 0; G.steerY = null; gateCount = 2;
   if (G.mode === 'runner') {
     G.stage = bgFor(G.n); G.scene = sceneFor(G.n);
     LVL = buildRunner(G.n);
@@ -1025,7 +1030,7 @@ function reset() {
     G.cam = 0; G.camY = 0; G.scroll = 0;
   } else {
     LVL = flyLevel(G.n); G.stage = bgFor(G.n); G.scene = sceneFor(G.n); G.fzone = FZ_ORDER[(G.n - 1) % FZ_ORDER.length]; G.scroll = 0; lastBase = lastHang = null;
-    P = { x: 76, y: 92, vy: 0, inv: 0, rot: 0 }; spawnIn = 200; blimpIn = 700; lastH = 50;
+    P = { x: 76, y: 92, vy: 0, inv: 0, rot: 0 }; spawnIn = 200; blimpIn = 520; lastH = 50; shots = []; fireCD = 0; shotHint = G.n === 2; gateHint = G.n === 3;
   }
 }
 function setState(s) { G.state = s; G.stateT = 0; }
@@ -1058,7 +1063,7 @@ function loseHeart(why, fromX) {
   if (G.mode === 'runner') {
     if (why === 'fall') { P.x = P.cp; P.y = 184 - 60; P.vx = 0; P.vy = 0; P.ground = false; }
     else { P.vx = (P.x + 7 < fromX ? -1 : 1) * 150; P.vy = -220; P.ground = false; P.onPlat = false; }
-  } else { P.vy = -190; G.slowT = 0.6; }
+  } else { P.vy = P.y > 120 ? -150 : 150; G.slowT = 0.6; }
 }
 /* Bumping a bug costs stars first. They fly off and are gone for good; with
    no stars left to lose, it costs a heart instead. */
@@ -1222,7 +1227,7 @@ const flyZone = () => FZ[G.fzone] || FZ.table;
 const FNAT = { hob: 40, eggs: 66, tins: 84, copper: 72, utensils: 74, board: 44, mixbowl: 52, cereal: 60, teapot: 62, fruitbowl: 68, toaster: 74, melon: 60, pots: 74, cake: 86, stockpot: 98, soap: 104, blender: 118, bottles: 116, dishes: 126, tap: 132, dishrack: 72, jars: 110,
   hood: 64, lamp: 76, garlic: 84, plant: 84, icicles: 52, hpan: 66, hfrypan: 68, ladle: 70, whisk: 62, sausages: 72, grapes: 50 };
 const F2_IMG = {};
-for (const kind of ['bg', 'ground', 'items', 'hang', 'fg']) for (const id in FLY2[kind]) { const im = new Image(); im.src = FLY2[kind][id].src; F2_IMG[kind + ':' + id] = im; if (FLY2[kind][id].sh) { const s = new Image(); s.src = FLY2[kind][id].sh.src; F2_IMG['sh:' + id] = s; } }
+for (const kind of ['bg', 'ground', 'items', 'hang', 'fg', 'critter']) for (const id in (FLY2[kind] || {})) { const im = new Image(); im.src = FLY2[kind][id].src; F2_IMG[kind + ':' + id] = im; if (FLY2[kind][id].sh) { const s = new Image(); s.src = FLY2[kind][id].sh.src; F2_IMG['sh:' + id] = s; } }
 const f2 = (kind, id) => { const a = FLY2[kind][id], im = F2_IMG[kind + ':' + id]; return a && ready(im) ? [a, im] : null; };
 const hasItem = id => !!FLY2.items[id];
 const hasHang = id => !!FLY2.hang[id];   /* only the new, matching art */
@@ -1269,6 +1274,19 @@ function spawnBuilding() {
     if (top > 4 && hid !== 'hood') hb.hbs.push([iw / 2 - 1, 0, 2, top]);   /* the chain or cord */
     obs.push(hb);
   }
+  /* from stage 3, now and then a target blocks the gap: shoot it until it breaks, then fly through */
+  let gated = false;
+  if (L.targets && --gateCount <= 0) {
+    gateCount = rint(3, 4);
+    const hangO = obs[obs.length - 1].t === 'hang' && obs[obs.length - 1].x < x + dw ? obs[obs.length - 1] : null;
+    const gTop = hangO ? hangO.h : 8, gBot = o.y, gh = gBot - gTop;
+    if (gh > 40) {
+      const r = Math.min(26, gh / 2 - 4), hp = 3 + Math.round(4 * d);
+      const tg = { t: 'target', x: x + dw / 2 - r, y: gTop, w: r * 2, h: gh, r, by: gTop + gh / 2, hb: [r * 0.3, 0, r * 1.4, gh], vx: 0, hp, max: hp, ph: Math.random() * 6, wob: 0, flash: 0 };
+      if (gateHint) { tg.hint = 'BREAK THE TARGET!'; gateHint = false; }
+      obs.push(tg); gated = true;
+    }
+  }
   const gap = (L.speed * (1.0 - 0.35 * d) + 40 + Math.random() * (70 - 30 * d)) * T.spacing;
   const sy = clamp(rnd(60, 150), 40, 200 - tall - 26);
   for (let i = 0; i < 3; i++) coins.push({ x: x + dw + gap / 2 - 16 + i * 12, y: sy + Math.sin(i * 1.6) * 6 });
@@ -1285,26 +1303,74 @@ function updFlyer(dt) {
   const dx = G.speed * dt; G.dist += dx; G.scroll += dx;
   if (P.inv > 0 && playing) P.inv -= dt;
 
-  let ay = 300 * T.gravity;
-  if (playing) { if (keys.up) ay -= 900 * T.power; if (keys.down) ay += 560 * T.power; }
-  else ay = -220;
-  P.vy = clamp(P.vy + ay * dt, -150, 180); P.y += P.vy * dt;
+  /* steering: up and down nudge the plane and it holds its height when you let go (no gravity);
+     on a phone the plane follows your finger up and down */
+  let vwant = 0;
+  if (playing) {
+    if (G.steerY != null) vwant = clamp((G.steerY - P.y) * 5, -150, 150);
+    else vwant = ((keys.down ? 1 : 0) - (keys.up ? 1 : 0)) * 125 * T.power;
+  }
+  P.vy += (vwant - P.vy) * Math.min(1, dt * 9); P.y += P.vy * dt;
+  if (!playing && G.state !== 'clear') P.y += (92 + Math.sin(G.anim * 2.2) * 5 - P.y) * Math.min(1, dt * 3);
   if (P.y < 14) { P.y = 14; if (P.vy < 0) P.vy = 0; }
-  if (P.y + 6 >= gy) { P.y = gy - 6; P.vy = -210; if (playing) loseHeart('hit'); }
+  if (P.y + 6 >= gy) { P.y = gy - 6; P.vy = -120; if (playing) loseHeart('hit'); }
   P.rot = lerp(P.rot, clamp(P.vy / 260, -0.45, 0.5), 0.2);
 
   const open = G.dist < LVL.len - 300;
   spawnIn -= dx; if (spawnIn <= 0) { if (open) spawnBuilding(); else spawnIn = 9999; }
-  if (LVL.blimps) {   /* a fly (or a fruit fly in the fridge) buzzes across, higher up */
+  if (LVL.blimps) {   /* flies (fruit flies in the fridge) buzz across; from stage 4 moths too. Shoot them for stars. */
     blimpIn -= dx;
     if (blimpIn <= 0) {
       let minTop = 200;
       for (const o of obs) if (o.t === 'set' && o.x > 190) minTop = Math.min(minTop, o.y);
-      const y = Math.min(rint(26, 44), minTop - 50);
-      if (y >= 22 && open) { obs.push({ t: 'fly', x: W + 20, y, w: 26, h: 20, hb: [5, 4, 17, 12], vx: 18 + 12 * diff(G.n), ph: Math.random() * 6 }); blimpIn = rnd(900, 1300) * (1 - 0.4 * diff(G.n)); }
-      else blimpIn = 160;
+      const y = Math.min(rint(30, 120), minTop - 34), d = diff(G.n);
+      if (y >= 24 && open) {
+        const moth = LVL.moths && Math.random() < 0.35;
+        const o = moth ? { t: 'fly', kind: 'moth', x: W + 20, y, w: 30, h: 24, hb: [5, 5, 20, 14], vx: 10 + 8 * d, ph: Math.random() * 6, hp: 2, amp: 18 }
+                       : { t: 'fly', kind: 'fly', x: W + 20, y, w: 24, h: 18, hb: [4, 4, 16, 11], vx: 22 + 18 * d, ph: Math.random() * 6, hp: 1, amp: 8 };
+        o.y0 = y;
+        if (shotHint) { o.hint = 'SHOOT IT!'; shotHint = false; }
+        obs.push(o);
+        blimpIn = rnd(380, 700) * (1 - 0.45 * d);
+      } else blimpIn = 120;
     }
   }
+  /* firing: a blob of the pilot's own sauce colour, while the fire button is held */
+  if (fireCD > 0) fireCD -= dt;
+  if (playing && keys.fire && fireCD <= 0) {
+    fireCD = 0.22; const a = P.rot;
+    shots.push({ x: P.x + 20 * Math.cos(a), y: P.y + 20 * Math.sin(a) - 1, vx: 330 * Math.cos(a), vy: 330 * Math.sin(a), life: 1.4 });
+    sfx.pew();
+  }
+  for (const b of shots) {
+    b.x += b.vx * dt; b.y += b.vy * dt; b.life -= dt;
+    for (const o of obs) {
+      if (b.life <= 0) break;
+      const boxes = o.hbs || [o.hb];
+      if (!boxes.some(q => b.x > o.x + q[0] - 2 && b.x < o.x + q[0] + q[2] + 2 && b.y > o.y + q[1] - 2 && b.y < o.y + q[1] + q[3] + 2)) continue;
+      b.life = 0;
+      if (o.t === 'fly') {
+        o.hp--; o.flash = 0.12;
+        if (o.hp <= 0) {
+          o.dead = true; G.kills = (G.kills || 0) + 1; const n = o.kind === 'moth' ? 2 : 1; G.coins += n; sfx.coin(); sfx.splat();
+          for (let i = 0; i < 14; i++) parts.push({ x: o.x + o.w / 2, y: o.y + o.h / 2, vx: rnd(-120, 120), vy: rnd(-140, 60), g: 260, life: 0.6, col: i % 2 ? shotCol() : '#ffffff', s: 2.2, world: true });
+          pops.push({ text: '+' + n, x: o.x + o.w / 2, y: o.y - 6, life: 0.9, col: '#ffe14a', sc: 3 });
+        } else sfx.splat();
+      } else if (o.t === 'target') {
+        o.hp--; o.flash = 0.12; o.wob = 1; sfx.splat();
+        for (let i = 0; i < 5; i++) parts.push({ x: b.x, y: b.y, vx: rnd(-90, 10), vy: rnd(-80, 80), g: 220, life: 0.4, col: shotCol(), s: 2, world: true });
+        if (o.hp <= 0) {
+          o.dead = true; G.coins += 3; sfx.coin(); tone(660, 1320, 0.25, 'square', 0.04);
+          pops.push({ text: '+3', x: o.x + o.r, y: o.by - o.r - 8, life: 1, col: '#ffe14a', sc: 3 });
+          for (let i = 0; i < 26; i++) { const a = rnd(0, TAU), v = rnd(60, 200); parts.push({ x: o.x + o.r, y: o.by, vx: Math.cos(a) * v, vy: Math.sin(a) * v, g: 300, life: 0.9, col: ['#f45b45', '#ffffff', '#ffcf2e'][i % 3], s: 2.6, world: true }); }
+        }
+      } else { sfx.splat(); for (let i = 0; i < 6; i++) parts.push({ x: b.x, y: b.y, vx: rnd(-70, 10), vy: rnd(-70, 70), g: 200, life: 0.35, col: shotCol(), s: 1.8, world: true }); }
+    }
+  }
+  shots = shots.filter(b => b.life > 0 && b.x < W + 10 && b.y > -10 && b.y < 210);
+  for (const o of obs) if (o.t === 'fly') { o.y = o.y0 + Math.sin(G.anim * (o.kind === 'moth' ? 3.1 : 2.2) + o.ph) * o.amp + (o.kind === 'moth' ? Math.sin(G.anim * 7.3 + o.ph) * 4 : 0); if (o.flash > 0) o.flash -= dt; }
+  for (const o of obs) if (o.t === 'target') { if (o.flash > 0) o.flash -= dt; if (o.wob > 0) o.wob = Math.max(0, o.wob - dt * 3); }
+  obs = obs.filter(o => !o.dead);
   const px = P.x - 13, py = P.y - 5;
   for (const o of obs) {
     o.x -= dx + o.vx * dt;
@@ -1652,12 +1718,36 @@ function drawFlyFront() {
   v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, Z.frost ? 'rgba(0,10,30,0.3)' : 'rgba(30,14,0,0.3)');
   ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
 }
+/* A glossy target, held in the gap by a rod from above and a stand from below. */
+function drawTarget(o) {
+  const cx = o.x + o.r, cy = o.by + Math.sin(o.wob * 20) * o.wob * 2, r = o.r, rot = Math.sin(o.wob * 25) * o.wob * 0.12;
+  const rod = (y0, y1) => { const g = ctx.createLinearGradient(cx - 1.6, 0, cx + 1.6, 0); g.addColorStop(0, '#8a5e22'); g.addColorStop(0.5, '#ffe3a0'); g.addColorStop(1, '#8a5e22'); ctx.fillStyle = g; ctx.fillRect(cx - 1.6, y0, 3.2, y1 - y0); };
+  rod(o.y - 2, cy - r + 2); rod(cy + r - 2, o.y + o.h);
+  ell(ctx, cx, o.y + o.h + 0.5, 7, 1.6, 'rgba(0,0,0,0.3)'); rr(ctx, cx - 7, o.y + o.h - 3, 14, 3.4, 1.6, '#c9913f', '#6e3f15', 0.5);
+  ctx.save(); ctx.translate(cx, cy); ctx.rotate(rot);
+  circ(ctx, 1.5, 2, r, 'rgba(0,0,0,0.25)');
+  const rings = ['#f45b45', '#ffffff', '#f45b45', '#ffffff', '#ffcf2e'];
+  rings.forEach((c, i) => circ(ctx, 0, 0, r * (1 - i * 0.19), c));
+  circ(ctx, 0, 0, r, null, '#8a1f12', 1.2); circ(ctx, 0, 0, r - 1.2, null, '#ffd98a', 0.8);
+  /* cracks as it takes hits */
+  const dmg = 1 - o.hp / o.max;
+  for (let i = 0; i < Math.floor(dmg * 6); i++) { const a = i * 2.1 + 0.4; line(ctx, Math.cos(a) * r * 0.15, Math.sin(a) * r * 0.15, Math.cos(a + 0.3) * r * 0.95, Math.sin(a + 0.3) * r * 0.95, 'rgba(60,20,10,0.75)', 0.9); }
+  ell(ctx, -r * 0.35, -r * 0.45, r * 0.42, r * 0.22, 'rgba(255,255,255,0.45)');
+  if (o.flash > 0) circ(ctx, 0, 0, r, 'rgba(255,255,255,0.55)');
+  ctx.restore();
+  for (let i = 0; i < o.max; i++) circ(ctx, cx - (o.max - 1) * 3 + i * 6, cy + r + 6, 2, i < o.hp ? '#ffe14a' : 'rgba(255,255,255,0.3)', 'rgba(20,26,51,0.6)', 0.5);
+}
 function drawFly(o) {
-  const cid = G.fzone === 'fridge' ? 'fruitfly' : 'fly', cr = WORLD.critter[cid], im = W_IMG['critter:' + cid], t = G.anim + o.ph;
+  const moth = o.kind === 'moth', t = G.anim + o.ph;
+  const m2 = moth && FLY2.critter && FLY2.critter.moth && ready(F2_IMG['critter:moth']) ? [FLY2.critter.moth, F2_IMG['critter:moth']] : null;
+  const cid = G.fzone === 'fridge' ? 'fruitfly' : 'fly', cr = m2 ? m2[0] : WORLD.critter[cid], im = m2 ? m2[1] : W_IMG['critter:' + cid];
   if (!(cr && ready(im))) { blit(S.blimp, o.x, o.y); return; }
-  const hgt = 22, wd = hgt * cr.w / cr.h;
-  ctx.save(); ctx.translate(o.x + o.w / 2, o.y + o.h / 2 + Math.sin(t * 5) * 3); ctx.scale(-1, 1 + Math.sin(t * 40) * 0.025); ctx.rotate(Math.sin(t * 3) * 0.08);
-  ctx.drawImage(im, -wd / 2, -hgt / 2, wd, hgt); ctx.restore();
+  const hgt = moth ? 30 : 22, wd = hgt * cr.w / cr.h;
+  ctx.save(); ctx.translate(o.x + o.w / 2, o.y + o.h / 2); ctx.scale(-1, 1 + Math.sin(t * (moth ? 18 : 40)) * (moth ? 0.08 : 0.025)); ctx.rotate(Math.sin(t * 3) * 0.08);
+  if (moth && !m2) ctx.filter = 'sepia(1) saturate(0.6) brightness(1.15)';   /* until the moth art arrives */
+  ctx.drawImage(im, -wd / 2, -hgt / 2, wd, hgt); ctx.filter = 'none';
+  if (o.flash > 0) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.6; ctx.drawImage(im, -wd / 2, -hgt / 2, wd, hgt); }
+  ctx.restore();
 }
 /* The plane, in the colours of whoever is flying it. */
 const PLANE_W = 44;
@@ -1787,7 +1877,9 @@ function hintSub(kind) {
   if (kind === 'duck') return TOUCH ? 'TAP THE DOWN BUTTON' : 'PRESS DOWN';
   if (kind === 'stomp') return 'LAND ON TOP OF IT';
   if (kind === 'ride') return 'STEP ON WHEN IT COMES CLOSE';
-  if (kind === 'fly') return TOUCH ? 'HOLD THE UP BUTTON' : 'HOLD SPACE';
+  if (kind === 'fly') return TOUCH ? 'DRAG YOUR FINGER UP' : 'PRESS UP';
+  if (kind === 'shoot') return TOUCH ? 'HOLD THE RED FIRE BUTTON' : 'HOLD X TO FIRE';
+  if (kind === 'target') return TOUCH ? 'HOLD FIRE TO BREAK IT' : 'HOLD X TO BREAK IT';
   return TOUCH ? 'TAP THE JUMP BUTTON' : 'PRESS SPACE OR UP';
 }
 function drawSign(cx, top, text, sub) {   /* a glossy speech bubble */
@@ -1811,7 +1903,7 @@ function drawHints() {
     }
   } else for (const o of obs) {
     if (!o.hint || o.x - P.x < 4 || o.x - P.x > 170) continue;
-    drawSign(o.x + o.w / 2, o.y - 30 + bob, o.hint, 'fly');
+    drawSign(o.x + o.w / 2, (o.t === 'target' ? o.by - o.r : o.y) - 30 + bob, o.hint, o.t === 'fly' ? 'shoot' : o.t === 'target' ? 'target' : 'fly');
   }
 }
 
@@ -2602,7 +2694,14 @@ function render() {
     if (inRun) drawFinish();
     drawFlyObstacles();
     drawRack2();
+    for (const o of obs) if (o.t === 'target') drawTarget(o);
     for (const o of obs) if (o.t === 'fly') drawFly(o);
+    for (const b of shots) {   /* sauce blobs with a little trail */
+      const c = shotCol();
+      ell(ctx, b.x - 5, b.y, 5, 1.4, 'rgba(255,255,255,0.25)');
+      ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(Math.atan2(b.vy, b.vx));
+      ell(ctx, 0, 0, 4.8, 3.2, c, 'rgba(20,26,51,0.6)', 0.6); ell(ctx, 1, -1.1, 1.5, 0.9, 'rgba(255,255,255,0.8)'); ctx.restore();
+    }
     for (const c of coins) {
       const f = S.coin[((G.anim * 8 + c.x / 12) | 0) % 4], cy = c.y + Math.sin(G.anim * 5 + c.x / 20) * 1.5;
       ctx.drawImage(f, c.x + f.lw / 2 - f.lw * STAR_K / 2, cy + f.lh / 2 - f.lh * STAR_K / 2, f.lw * STAR_K, f.lh * STAR_K);
@@ -2618,7 +2717,7 @@ function render() {
   drawHints();
   for (const p of pops) drawText(p.text, p.x, p.y, p.sc, p.col, 1);
   if (inRun) drawHUD();
-  if (TOUCH && G.state === 'play') drawTouchPads();
+  if (TOUCH && (G.state === 'play' || G.state === 'intro')) drawTouchPads();
   if (G.state === 'title') drawSelect(blink);
   else if (G.state === 'map') drawMap(blink);
   else if (G.state === 'intro') drawIntro();
@@ -2638,12 +2737,16 @@ function render() {
    right (in the Flyer: slower, faster, down, up). */
 const PADS = [
   { id: 'left', x: 26, y: H - 26 }, { id: 'right', x: 70, y: H - 26 },
-  { id: 'down', x: W - 70, y: H - 26 }, { id: 'up', x: W - 26, y: H - 26 }
+  { id: 'down', x: W - 70, y: H - 26 }, { id: 'up', x: W - 26, y: H - 26 },
+  { id: 'fire', x: W - 48, y: H - 80, flyer: true }
 ];
 function drawTouchPads() {
   const runner = G.mode === 'runner';
   for (const p of PADS) {
+    if (p.flyer && runner) continue;
+    if (!runner && !p.flyer) continue;   /* in the Flyer only the fire button shows */
     const on = keys[p.id], r = 17;
+    if (p.id === 'fire') { ctx.globalAlpha = on ? 0.95 : 0.75; glossCircle(p.x, p.y, r, 'red', on); ctx.globalAlpha = 1; circ(ctx, p.x, p.y, 5.5, null, '#ffffff', 1.4); line(ctx, p.x - 9, p.y, p.x + 9, p.y, '#ffffff', 1.2); line(ctx, p.x, p.y - 9, p.x, p.y + 9, '#ffffff', 1.2); drawText('FIRE', p.x, p.y - 30, 1, 'rgba(255,255,255,0.85)', 1); continue; }
     ctx.globalAlpha = on ? 0.95 : 0.7; glossCircle(p.x, p.y, r, p.id === 'up' || p.id === 'down' ? 'orange' : 'blue', on); ctx.globalAlpha = 1;
     const a = { left: Math.PI, right: 0, up: -Math.PI / 2, down: Math.PI / 2 }[p.id];
     const pts = [[7, 0], [-4, -6], [-4, 6]].flatMap(([dx, dy]) => [p.x + dx * Math.cos(a) - dy * Math.sin(a), p.y + dx * Math.sin(a) + dy * Math.cos(a)]);
@@ -2709,7 +2812,7 @@ function mapTap(gx, gy) {
 }
 function setMuted(v) { muted = !!v; if (!muted) ensureAudio(); syncUI(); save(); }
 
-const KEYMAP = { ArrowLeft: 'left', a: 'left', A: 'left', ArrowRight: 'right', d: 'right', D: 'right', ArrowDown: 'down', s: 'down', S: 'down', ArrowUp: 'up', w: 'up', W: 'up', ' ': 'up', Spacebar: 'up' };
+const KEYMAP = { x: 'fire', X: 'fire', f: 'fire', F: 'fire', Shift: 'fire', ArrowLeft: 'left', a: 'left', A: 'left', ArrowRight: 'right', d: 'right', D: 'right', ArrowDown: 'down', s: 'down', S: 'down', ArrowUp: 'up', w: 'up', W: 'up', ' ': 'up', Spacebar: 'up' };
 window.addEventListener('keydown', e => {
   const tag = e.target && e.target.tagName;
   if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
@@ -2728,6 +2831,7 @@ window.addEventListener('keydown', e => {
   else if (k === 'Enter' && !onBtn) { if (!e.repeat) goUp(); }
   else if (act === 'down') { if (!e.repeat) downBuf = 0.12; keys.down = true; }
   else if (act === 'left' || act === 'right') keys[act] = true;
+  else if (act === 'fire') { keys.fire = true; e.preventDefault(); }
   else if (k === 'p' || k === 'P') { if (!e.repeat) togglePause(); }
   else if (k === 'm' || k === 'M') { if (!e.repeat) setMuted(!muted); }
   else if (k === '1') setMode('runner');
@@ -2743,22 +2847,23 @@ window.addEventListener('keydown', e => {
   e.preventDefault();
 });
 window.addEventListener('keyup', e => { const act = KEYMAP[e.key]; if (act) keys[act] = false; });
-window.addEventListener('blur', () => { G.focus = false; keys.up = keys.down = keys.left = keys.right = false; if (G.state === 'play') G.state = 'paused'; });
+window.addEventListener('blur', () => { G.focus = false; keys.up = keys.down = keys.left = keys.right = keys.fire = false; if (G.state === 'play') G.state = 'paused'; });
 window.addEventListener('focus', () => { G.focus = true; });
 
 /* Touch: each finger holds one of the four buttons, and can slide from one
    to another (say from left to right) without lifting. */
 const fingers = new Map();
-function syncFingers() { keys.up = keys.down = keys.left = keys.right = false; for (const v of fingers.values()) if (v) keys[v] = true; }
+function syncFingers() { keys.up = keys.down = keys.left = keys.right = keys.fire = false; let st = false; for (const v of fingers.values()) { if (v === 'steer') st = true; else if (v) keys[v] = true; } if (!st) G.steerY = null; }
 function padAt(gx, gy) {
   let best = null, bd = 30;
-  for (const p of PADS) { const d = Math.hypot(gx - p.x, gy - p.y); if (d < bd) { bd = d; best = p.id; } }
+  for (const p of PADS) { if (p.flyer && G.mode !== 'flyer') continue; const d = Math.hypot(gx - p.x, gy - p.y); if (d < bd) { bd = d; best = p.id; } }
   if (!best && gy > H * 0.45) best = gx < W / 2 ? (gx < W / 4 ? 'left' : 'right') : (gx > W * 0.75 ? 'up' : 'down');
   return best;
 }
 function canvasXY(e) { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * W, (e.clientY - r.top) / r.height * H]; }
 cv.addEventListener('pointerdown', e => {
   e.preventDefault(); cv.focus({ preventScroll: true }); G.focus = true;
+  if (e.pointerType === 'touch') TOUCH = true;   /* some phones (Samsung) don't say so until a finger lands */
   try { cv.setPointerCapture(e.pointerId); } catch (err) {}
   const [gx, gy] = canvasXY(e);
   ensureAudio();
@@ -2771,13 +2876,20 @@ cv.addEventListener('pointerdown', e => {
   if ((G.state === 'paused' || G.state === 'fail') && gy > 130 && gy < 150 && Math.abs(gx - W / 2) < 56) { openMap(); return; }
   if (G.state !== 'play') { goUp(); return; }
   if (gy < 26 && gx > W - 30) { togglePause(); return; }
-  if (!TOUCH && e.pointerType === 'mouse') { goUp(); return; }   /* a mouse click jumps */
+  if (!TOUCH && e.pointerType === 'mouse' && G.mode !== 'flyer') { goUp(); return; }   /* a mouse click jumps */
+  if (e.pointerType === 'mouse' && G.mode === 'flyer') { fingers.set(e.pointerId, 'fire'); syncFingers(); return; }   /* a mouse click fires */
+  if (G.mode === 'flyer') {   /* the fire button, or steer with the finger */
+    const fp = PADS.find(p => p.id === 'fire');
+    if (Math.hypot(gx - fp.x, gy - fp.y) < 30) { fingers.set(e.pointerId, 'fire'); syncFingers(); return; }
+    fingers.set(e.pointerId, 'steer'); G.steerY = gy; syncFingers(); return;
+  }
   const id = padAt(gx, gy);
   fingers.set(e.pointerId, id); syncFingers();
   if (id === 'up') goUp(); else if (id === 'down') downBuf = 0.12;
 });
 cv.addEventListener('pointermove', e => {
   if (!fingers.has(e.pointerId)) return;
+  if (fingers.get(e.pointerId) === 'steer') { G.steerY = canvasXY(e)[1]; return; }
   const [gx, gy] = canvasXY(e), id = padAt(gx, gy), was = fingers.get(e.pointerId);
   if (id !== was && (id === 'left' || id === 'right') && (was === 'left' || was === 'right')) { fingers.set(e.pointerId, id); syncFingers(); }
 });
