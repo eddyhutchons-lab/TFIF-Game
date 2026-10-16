@@ -93,7 +93,7 @@ tr:last-child td{border-bottom:0}
 
 <main class="wrap">
   <header>
-    <p class="tag">Build 0.35</p>
+    <p class="tag">Build 0.36</p>
     <h1>TFIF Game Prototype</h1>
     <p class="lede">Pick a character and steer them from the start to the finish flag. The stages never end: each one is a little longer and harder, and your best is the furthest stage you reach. Every fifth stage ends with a trophy and confetti. On a phone it plays full screen with touch buttons.</p>
   </header>
@@ -812,10 +812,13 @@ function loadAudio() {
   }
 }
 const hasAudio = k => audioBufs[k] && typeof audioBufs[k] === 'object';
-function playClip(k, delay = 0) {
+function playClip(k, delay = 0, fadeIn = 0, vol = null) {
   if (muted || !ac || !hasAudio(k)) return false;
-  const s = ac.createBufferSource(), g = ac.createGain();
-  s.buffer = audioBufs[k]; g.gain.value = AUDIO[k].vol || 0.8; s.connect(g); g.connect(ac.destination); s.start(ac.currentTime + delay);
+  const s = ac.createBufferSource(), g = ac.createGain(), v = vol !== null ? vol : (AUDIO[k].vol || 0.8), t = ac.currentTime + delay;
+  s.buffer = audioBufs[k];
+  if (fadeIn > 0) { g.gain.setValueAtTime(0.0001, ac.currentTime); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(v, t + fadeIn); }   /* eases in, no sharp start */
+  else g.gain.value = v;
+  s.connect(g); g.connect(ac.destination); s.start(t);
   return true;
 }
 const track = { name: null, src: null, gain: null };
@@ -858,7 +861,7 @@ const sfx = {
   fail: () => { [392, 330, 262].forEach((f, i) => tone(f, f * 0.98, 0.22, 'triangle', 0.08, i * 0.18)); },
   bonk: () => { tone(420, 180, 0.16, 'triangle', 0.09); tone(260, 140, 0.18, 'square', 0.025, 0.04); },
   clear: () => {   /* recorded party popper and cheer when we have them */
-    const c = playClip('fanfare', 0.05), b = playClip('cheer', 0.35), a = playClip('pop');
+    const c = playClip('fanfare', 0.2, 0.7, 0.6), b = playClip('cheer', 0.6, 0.9, 0.6), a = playClip('pop', 0, 0.3);   /* both ease in under the fading music */
     if (!a && !b && !c) { [523, 659, 784, 1047].forEach((f, i) => tone(f, f, 0.16, 'triangle', 0.08, i * 0.11)); tone(1047, 1047, 0.4, 'square', 0.03, 0.44); }
   },
   win: () => { [[523, 0], [659, 0.14], [784, 0.28], [1047, 0.42], [784, 0.62], [1047, 0.76], [1319, 0.9], [1568, 1.1]].forEach(([f, t]) => { tone(f, f, 0.22, 'triangle', 0.09, t); tone(f / 2, f / 2, 0.22, 'square', 0.025, t); }); }
@@ -1525,12 +1528,23 @@ function musicUpdate() {
     if (s === 'clear' && G.stateT < 2.6 && (hasAudio('cheer') || hasAudio('fanfare'))) want = null;
   }
   const fileWant = want && want.indexOf('file:') === 0 ? want.slice(5) : null;
-  if (fileWant !== track.name) { if (fileWant) playTrack(fileWant); else stopTrack(); }
+  if (fileWant !== track.name) { if (fileWant) playTrack(fileWant); else stopTrack(G.state === 'clear' ? 0.9 : 0.3); }
   if (G.state === 'paused' && track.gain) track.gain.gain.value = Math.min(track.gain.gain.value, 0.15);
   if (fileWant) want = null;   /* the chiptune rests while a recorded track plays */
+  if (want && music.fading) {   /* moved on before the fade finished: bring the music back */
+    const g0 = mOut(), n0 = ac.currentTime; music.fading = false;
+    g0.gain.cancelScheduledValues(n0); g0.gain.setValueAtTime(g0.gain.value, n0); g0.gain.linearRampToValueAtTime(0.75, n0 + 0.3);
+  }
   if (want === music.song) return;
+  if (!want && music.fading) return;   /* already fading out */
   const g = mOut(), now = ac.currentTime;
   g.gain.cancelScheduledValues(now); g.gain.setValueAtTime(g.gain.value, now);
+  if (!want && G.state === 'clear') {   /* keep playing while it fades, a gentle lead into the finish sounds */
+    g.gain.linearRampToValueAtTime(0, now + 0.9); music.fading = true;
+    setTimeout(() => { if (music.fading) { music.song = null; music.fading = false; } }, 950);
+    return;
+  }
+  music.fading = false;
   if (!want) { g.gain.linearRampToValueAtTime(0, now + 0.15); music.song = null; return; }
   g.gain.linearRampToValueAtTime(0.75, now + 0.3);
   music.song = want; music.step = 0; music.next = now + 0.05;
