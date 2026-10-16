@@ -93,7 +93,7 @@ tr:last-child td{border-bottom:0}
 
 <main class="wrap">
   <header>
-    <p class="tag">Build 0.36</p>
+    <p class="tag">Build 0.37</p>
     <h1>TFIF Game Prototype</h1>
     <p class="lede">Pick a character and steer them from the start to the finish flag. The stages never end: each one is a little longer and harder, and your best is the furthest stage you reach. Every fifth stage ends with a trophy and confetti. On a phone it plays full screen with touch buttons.</p>
   </header>
@@ -861,7 +861,7 @@ const sfx = {
   fail: () => { [392, 330, 262].forEach((f, i) => tone(f, f * 0.98, 0.22, 'triangle', 0.08, i * 0.18)); },
   bonk: () => { tone(420, 180, 0.16, 'triangle', 0.09); tone(260, 140, 0.18, 'square', 0.025, 0.04); },
   clear: () => {   /* recorded party popper and cheer when we have them */
-    const c = playClip('fanfare', 0.2, 0.7, 0.6), b = playClip('cheer', 0.6, 0.9, 0.6), a = playClip('pop', 0, 0.3);   /* both ease in under the fading music */
+    const c = playClip('fanfare', 0.05), b = playClip('cheer', 0.35), a = playClip('pop');
     if (!a && !b && !c) { [523, 659, 784, 1047].forEach((f, i) => tone(f, f, 0.16, 'triangle', 0.08, i * 0.11)); tone(1047, 1047, 0.4, 'square', 0.03, 0.44); }
   },
   win: () => { [[523, 0], [659, 0.14], [784, 0.28], [1047, 0.42], [784, 0.62], [1047, 0.76], [1319, 0.9], [1568, 1.1]].forEach(([f, t]) => { tone(f, f, 0.22, 'triangle', 0.09, t); tone(f / 2, f / 2, 0.22, 'square', 0.025, t); }); }
