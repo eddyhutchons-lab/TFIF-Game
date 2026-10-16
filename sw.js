@@ -1,6 +1,6 @@
 /* Keeps a copy of the game on the phone so it plays offline.
    Change VERSION whenever you upload a new build, so phones pick it up. */
-const VERSION = 'tfif-0.32';
+const VERSION = 'tfif-0.33';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png', 'favicon.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(VERSION).then(c => c.addAll(FILES)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== VERSION).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
