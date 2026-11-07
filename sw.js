@@ -1,12 +1,13 @@
 /* Keeps a copy of the game on the phone so it plays offline.
    Change VERSION whenever you upload a new build, so phones pick it up. */
-const VERSION = 'tfif-0.37';
+const VERSION = 'tfif-0.38';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png', 'favicon.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(VERSION).then(c => c.addAll(FILES)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== VERSION).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   const url = new URL(e.request.url);
+  if (url.origin !== location.origin) return;   /* sign-in, scores and rankings always go straight to the internet */
   /* the game page itself: always try the internet first so updates show at once; use the saved copy only offline */
   if (e.request.mode === 'navigate' || url.pathname.endsWith('/') || url.pathname.endsWith('index.html')) {
     e.respondWith(fetch(e.request, { cache: 'no-cache' }).then(res => {

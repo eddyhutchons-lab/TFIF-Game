@@ -11,6 +11,15 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="description" content="Run, jump and fly with ten food characters. Climb the weekly rankings and win prizes.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="What's Cooking? 2: The Fridge Is Full">
+<meta property="og:description" content="Run, jump and fly with ten food characters. Climb the weekly rankings and win prizes.">
+<meta property="og:url" content="https://eddyhutchons-lab.github.io/TFIF-Game/">
+<meta property="og:image" content="https://eddyhutchons-lab.github.io/TFIF-Game/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="627">
+<meta name="twitter:card" content="summary_large_image">
 <style>html,body{height:100%}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head>
 <body>
@@ -91,9 +100,183 @@ tr:last-child td{border-bottom:0}
 .note{margin:14px 0 0;color:var(--muted);font-size:.9rem;max-width:68ch}
 </style>
 
+<style id="online-css">
+/* ONLINE:BEGIN (written by online-import.py from online/online.css) */
+/* The live (online) version: the game fills the window on every device, ready to sit in a website. */
+body.live{padding:0;overflow:hidden;overscroll-behavior:none;background:#05070f}
+body.live .wrap{max-width:none;gap:0}
+body.live .wrap > :not(.stage){display:none}
+body.live .stage{position:fixed;inset:0;z-index:1;border-radius:0;display:grid;place-items:center;background:#05070f;padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)}
+body.live #game{border-radius:0;box-shadow:none}
+/* sign-up and rankings panel */
+.ol{position:absolute;inset:0;z-index:5;display:grid;place-items:center;padding:max(8px,env(safe-area-inset-top,0px)) max(10px,env(safe-area-inset-right,0px)) max(8px,env(safe-area-inset-bottom,0px)) max(10px,env(safe-area-inset-left,0px));background:rgba(5,12,34,0.62);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);font:500 15px/1.35 "Fredoka",system-ui,sans-serif;color:#fff;-webkit-user-select:text;user-select:text}
+.ol[hidden]{display:none}
+.ol-card{width:min(640px,100%);max-height:100%;overflow:auto;-webkit-overflow-scrolling:touch;background:linear-gradient(180deg,#1d5fc4 0%,#123f8e 60%,#0d2f6e 100%);border:3px solid #fff;border-radius:18px;box-shadow:0 6px 0 #082152,0 14px 40px rgba(0,0,0,0.45);padding:16px 20px 16px}
+.ol-ranks{width:min(760px,100%);height:100%;display:flex;flex-direction:column;padding:12px 16px}
+.ol h2{font:400 clamp(22px,4.2vw,30px)/1.05 "KidsRock","Fredoka",sans-serif;margin:0 0 4px;color:#ffd04d;text-shadow:0 2px 0 #9a4b00,0 3px 6px rgba(0,0,0,0.35);letter-spacing:.02em}
+.ol-sub{margin:0 0 12px;color:#d8ecff;font-size:14px}
+.ol-form{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px}
+.ol-form label{display:flex;flex-direction:column;gap:3px;font-weight:600;font-size:13px;color:#bfe0ff}
+.ol-form small{font-weight:400;font-size:11.5px;color:#a9c8f0}
+.ol-form input:not([type=checkbox]){font:600 16px/1.2 "Fredoka",system-ui,sans-serif;color:#0d2147;background:#fff;border:2px solid #9cc8ff;border-radius:10px;padding:8px 10px;width:100%;min-width:0}
+.ol-form input:focus{outline:3px solid #ffb21e;outline-offset:1px;border-color:#ffb21e}
+.ol-form .ol-tick{grid-column:1/-1;flex-direction:row;align-items:flex-start;gap:9px;font-weight:500;font-size:13px;color:#e6f2ff}
+.ol-tick input{width:20px;height:20px;flex:none;margin:1px 0 0;accent-color:#ff8a1f}
+.ol-tick a{color:#ffd04d}
+.ol-code{grid-template-columns:1fr}
+.ol-code input{font-size:28px!important;letter-spacing:.35em;text-align:center;max-width:260px}
+.ol-msg{grid-column:1/-1;margin:0;min-height:1.2em;font-size:13.5px;color:#d8ecff}
+.ol-msg.bad{color:#ffd0c4;font-weight:600}
+.ol-row{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px}
+.ol-go{font:400 19px/1 "KidsRock","Fredoka",sans-serif;letter-spacing:.03em;color:#fff;background:linear-gradient(180deg,#ffb43a 0%,#ff7a12 55%,#f05a00 100%);border:3px solid #fff;border-radius:999px;padding:11px 26px 10px;box-shadow:0 4px 0 #9a3a00;cursor:pointer;text-shadow:0 2px 0 #9a3a00}
+.ol-go:active{transform:translateY(2px);box-shadow:0 2px 0 #9a3a00}
+.ol-go:disabled{opacity:.6}
+.ol-small{font-size:15px;padding:7px 16px 6px}
+.ol-link{font:600 13.5px/1.2 "Fredoka",system-ui,sans-serif;color:#ffe08a;background:none;border:0;padding:6px 2px;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.ol button:focus-visible{outline:3px solid #ffb21e;outline-offset:2px}
+.ol-hint{margin:0;font-size:13.5px;color:#e6f2ff}
+/* rankings */
+.ol-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.ol-head h2{margin:0 auto 0 0}
+.ol-tabs{display:flex;gap:6px}
+.ol-x{width:38px;height:38px;flex:none;border-radius:50%;border:2px solid #fff;background:#0d2f6e;color:#fff;font-size:18px;cursor:pointer}
+.ol-filters{display:flex;flex-wrap:wrap;gap:6px 14px;margin:8px 0 8px}
+.ol-filters > div{display:flex;flex-wrap:wrap;gap:5px}
+.ol-chip{font:600 13px/1 "Fredoka",system-ui,sans-serif;color:#d8ecff;background:rgba(5,20,60,0.45);border:1.5px solid rgba(255,255,255,0.35);border-radius:999px;padding:7px 12px;cursor:pointer;white-space:nowrap}
+.ol-chip[aria-pressed=true]{color:#3b1d00;background:linear-gradient(180deg,#ffe07a,#ffb21e);border-color:#fff}
+.ol-tabs .ol-chip{font:400 16px/1 "KidsRock","Fredoka",sans-serif;padding:8px 14px 7px}
+.ol-list{flex:1;min-height:90px;overflow:auto;-webkit-overflow-scrolling:touch;background:rgba(4,18,52,0.4);border-radius:12px;padding:4px 8px}
+.ol-empty{margin:18px 8px;text-align:center;color:#cfe4ff}
+.ol-rows{list-style:none;margin:0;padding:0}
+.ol-rows li{display:grid;grid-template-columns:34px minmax(0,1fr) auto auto;align-items:center;gap:10px;padding:6px 4px;border-bottom:1px solid rgba(255,255,255,0.12)}
+.ol-rows li:last-child{border-bottom:0}
+.ol-rows li.is-me{background:rgba(255,190,40,0.22);border-radius:10px}
+.ol-rows .ol-gap{display:block;text-align:center;color:#9cc0ee;padding:0;border:0;line-height:1}
+.ol-rank{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font:700 14px/1 "Fredoka",sans-serif;background:rgba(255,255,255,0.14)}
+.ol-rank.r1{background:radial-gradient(circle at 35% 30%,#fff6b0,#ffc61a 55%,#c98200);color:#5a3300;box-shadow:0 0 0 2px #fff}
+.ol-rank.r2{background:radial-gradient(circle at 35% 30%,#ffffff,#cfd8e6 55%,#8d9bb3);color:#2b3548;box-shadow:0 0 0 2px #fff}
+.ol-rank.r3{background:radial-gradient(circle at 35% 30%,#ffd9b0,#e08a45 55%,#9a4c12);color:#3d1a00;box-shadow:0 0 0 2px #fff}
+.ol-name{font-weight:600;font-size:15.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ol-name em{font-style:normal;font-size:11px;font-weight:700;color:#3b1d00;background:#ffd04d;border-radius:6px;padding:1px 6px;margin-left:4px;vertical-align:2px}
+.ol-val{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ol-tier{font:700 10.5px/1 "Fredoka",sans-serif;letter-spacing:.06em;text-transform:uppercase;padding:4px 7px;border-radius:6px;white-space:nowrap}
+.t-Bronze{background:#b8733a;color:#fff}.t-Silver{background:#d9e2ee;color:#26324a}.t-Gold{background:#ffcc33;color:#4a2c00}
+.t-Platinum{background:#7fe3d6;color:#073b36}.t-Diamond{background:linear-gradient(90deg,#9ad7ff,#d6a8ff);color:#1d1440}
+.ol-me{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;margin-top:8px;font-size:14px;color:#e6f2ff}
+.ol-me b{color:#ffd04d}
+.ol-tierline{display:inline-flex;align-items:center;gap:6px}
+.ol-out{margin-left:auto}
+@media (max-height:430px){
+  .ol-card{padding:10px 14px}
+  .ol-sub{margin-bottom:8px;font-size:13px}
+  .ol-form{gap:5px 10px}
+  .ol-form small{display:none}
+  .ol-form input:not([type=checkbox]){padding:6px 9px;font-size:15px}
+  .ol-go{font-size:17px;padding:9px 22px 8px}
+  .ol-ranks{padding:8px 12px}
+  .ol-filters{margin:6px 0}
+  .ol-chip{padding:6px 10px;font-size:12.5px}
+  .ol-rows li{padding:4px 4px}
+  .ol-rank{width:26px;height:26px}
+}
+@media (max-width:520px){ .ol-form{grid-template-columns:1fr} }
+/* rankings: podium, list, your standing and the tier ladder */
+.ol-board{flex:1;min-height:0;display:grid;grid-template-columns:minmax(250px,1fr) minmax(0,1.15fr);gap:12px}
+.ol-board > .ol-empty{grid-column:1/-1}
+.ol-podium{display:grid;grid-template-columns:1fr 1.12fr 1fr;align-items:end;gap:6px;min-height:0;overflow:hidden;border-radius:14px;padding:10px 8px 0;background:radial-gradient(ellipse at 50% 105%,rgba(255,206,70,0.35),transparent 65%),rgba(4,18,52,0.4)}
+.ol-pod{display:flex;flex-direction:column;align-items:center;position:relative;min-width:0}
+.ol-hero{display:block;height:clamp(50px,17vh,150px);width:auto;max-width:100%;object-fit:contain;margin-bottom:-6px;position:relative;z-index:1;filter:drop-shadow(0 5px 4px rgba(0,0,0,0.45))}
+.p1 .ol-hero{height:clamp(66px,23vh,200px)}
+/* first place: lit by a warm spotlight with soft rays, instead of a crown */
+.ol-glow{position:absolute;z-index:0;left:50%;top:-6%;width:190%;aspect-ratio:1;transform:translateX(-50%);pointer-events:none;border-radius:50%;
+  background:radial-gradient(circle at 50% 50%,rgba(255,236,150,0.75) 0%,rgba(255,200,60,0.38) 26%,rgba(255,180,40,0.12) 46%,transparent 64%);filter:blur(2px)}
+.ol-glow::before{content:"";position:absolute;inset:0;border-radius:50%;
+  background:repeating-conic-gradient(from 0deg at 50% 50%,rgba(255,230,140,0.30) 0deg 7deg,transparent 7deg 22deg);
+  -webkit-mask:radial-gradient(circle,#000 8%,rgba(0,0,0,0.6) 30%,transparent 62%);mask:radial-gradient(circle,#000 8%,rgba(0,0,0,0.6) 30%,transparent 62%);
+  animation:ol-spin 40s linear infinite}
+@keyframes ol-spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.ol-glow::before{animation:none}}
+.p1 .ol-hero{filter:drop-shadow(0 0 10px rgba(255,214,90,0.65)) drop-shadow(0 5px 4px rgba(0,0,0,0.45))}
+.ol-pod.p1 .ol-step,.ol-pod .ol-step{position:relative;z-index:1}
+.ol-ghost{display:grid;place-items:center;width:clamp(48px,11vh,74px);height:clamp(48px,11vh,74px);border-radius:50%;border:2px dashed rgba(255,255,255,0.4);color:rgba(255,255,255,0.55);font:400 30px/1 "KidsRock","Fredoka",sans-serif;margin-bottom:6px;filter:none}
+.ol-step{width:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:3px;padding:7px 5px 8px;border-radius:12px 12px 0 0;text-align:center;border:2px solid rgba(255,255,255,0.85);border-bottom:0;box-shadow:inset 0 -10px 18px rgba(0,0,0,0.12)}
+.p1 .ol-step{min-height:clamp(100px,25vh,160px);background:linear-gradient(180deg,#fff0a0,#ffc93a 45%,#e8a20e);color:#4a2c00}
+.p2 .ol-step{min-height:clamp(62px,15vh,96px);background:linear-gradient(180deg,#ffffff,#d9e1ec 50%,#a7b4c8);color:#26324a}
+.p3 .ol-step{min-height:clamp(50px,11vh,72px);background:linear-gradient(180deg,#ffd9b0,#e69a5a 50%,#b8682a);color:#3d1a00}
+.ol-pod.empty .ol-step{opacity:0.45}
+.ol-pod.is-me .ol-step{border-color:#fff;box-shadow:0 0 0 3px #ffd04d,inset 0 -10px 18px rgba(0,0,0,0.12)}
+.ol-place{font:400 24px/1 "KidsRock","Fredoka",sans-serif;text-shadow:0 1px 0 rgba(255,255,255,0.6)}
+.ol-pname{font-weight:700;font-size:13.5px;line-height:1.15;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ol-pname em,.ol-name em{font-style:normal;font-size:10.5px;font-weight:700;color:#3b1d00;background:#ffd04d;border-radius:6px;padding:1px 5px;margin-left:3px;vertical-align:1px}
+.ol-pval{font-weight:700;font-size:12.5px;font-variant-numeric:tabular-nums}
+.ol-board .ol-list{min-height:0;overflow:auto}
+.ol-rows li{grid-template-columns:30px 28px minmax(0,1fr) auto auto}
+.ol-mini{width:28px;height:28px;object-fit:contain;filter:drop-shadow(0 1px 1px rgba(0,0,0,0.4))}
+.ol-badge{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.ol-badge i{width:14px;height:16px;flex:none;clip-path:polygon(50% 0,100% 17%,100% 58%,50% 100%,0 58%,0 17%);box-shadow:inset 0 0 0 2px rgba(255,255,255,0.5)}
+.ol-badge b{font:700 10.5px/1 "Fredoka",sans-serif;letter-spacing:.06em;text-transform:uppercase}
+.ol-badge.big i{width:26px;height:30px}
+.ol-badge.big b{font-size:12px}
+.b-Bronze i{background:linear-gradient(160deg,#ffd0a0,#c27a3e 55%,#83461a)}
+.b-Silver i{background:linear-gradient(160deg,#ffffff,#c4cedd 55%,#7f8ca3)}
+.b-Gold i{background:linear-gradient(160deg,#fff6b8,#ffc61a 55%,#c98200)}
+.b-Platinum i{background:linear-gradient(160deg,#e3fffa,#6fdccd 55%,#2a9c8e)}
+.b-Diamond i{background:linear-gradient(160deg,#e8f7ff,#8fd0ff 45%,#a07dff)}
+.ol-step .ol-badge b{color:inherit}
+.ol-me{display:grid;grid-template-columns:minmax(0,0.9fr) minmax(0,1.5fr) auto;align-items:center;gap:6px 16px;margin-top:8px;padding:8px 12px;background:rgba(4,18,52,0.45);border-radius:12px}
+.ol-pos{display:flex;align-items:center;gap:10px;font-size:13px;line-height:1.3}
+.ol-big{font:400 36px/1 "KidsRock","Fredoka",sans-serif;color:#ffd04d;text-shadow:0 2px 0 #9a4b00}
+.ol-ladder{display:flex;align-items:flex-start}
+.ol-rung{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:3px;position:relative}
+.ol-rung .ol-badge{flex-direction:column;gap:2px;position:relative;z-index:1}
+.ol-rung:not(.done):not(.here) .ol-badge{opacity:0.5}
+.ol-rung small{font-size:10.5px;color:#bcd6f7;white-space:nowrap}
+.ol-rung.here small{color:#ffd04d;font-weight:700}
+.ol-bar{position:absolute;top:7px;left:calc(50% + 12px);right:calc(-50% + 12px);height:5px;border-radius:3px;background:rgba(255,255,255,0.18);overflow:hidden}
+.ol-rung.here .ol-bar{top:13px}
+.ol-bar span{display:block;height:100%;background:linear-gradient(90deg,#ffd04d,#ff9a1f);border-radius:3px}
+.ol-next{margin:3px 0 0;font-size:11.5px;color:#d8ecff;text-align:center}
+.ol-foot{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.ol-foot .ol-out{margin:0}
+@media (max-height:430px){
+  .ol-filters{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  .ol-filters > div{flex-wrap:nowrap}
+  .ol-head h2{font-size:22px}
+  .ol-x{width:32px;height:32px}
+  .ol-tabs .ol-chip{padding:6px 12px 5px;font-size:14px}
+  .ol-me{padding:6px 10px;margin-top:6px}
+  .ol-big{font-size:30px}
+  .ol-rung small{display:none}
+  .ol-step{padding:5px 4px 6px}
+  .ol-hero{height:13vh}
+  .p1 .ol-hero{height:17vh}
+  .p1 .ol-step{min-height:0;padding-bottom:9vh}.p2 .ol-step{min-height:0;padding-bottom:3.5vh}.p3 .ol-step{min-height:0;padding-bottom:6px}
+  .ol-podium{padding-top:4px}
+}
+@media (max-width:680px){
+  .ol-board{grid-template-columns:1fr;overflow:auto}
+  .ol-me{grid-template-columns:1fr}
+  .ol-foot{align-items:flex-start}
+}
+/* "This week's challenge": the banner on the opening screen, and the strip on the rankings */
+.ol-banner{position:absolute;z-index:4;display:flex;flex-direction:column;align-items:flex-start;gap:0.25em;text-align:left;padding:0.7em 0.9em 0.75em;border:0.16em solid #fff;border-radius:0.9em;background:linear-gradient(170deg,#ffb21e 0%,#ff7a12 100%);box-shadow:0 0.3em 0 #9a3f00,0 0.6em 1.6em rgba(0,0,0,0.35);color:#3b1d00;font-family:"Fredoka",system-ui,sans-serif;line-height:1.15;cursor:pointer;animation:ol-in .45s cubic-bezier(.2,1.4,.4,1) both}
+.ol-banner:hover{filter:brightness(1.06)}
+.ol-banner:focus-visible{outline:3px solid #fff;outline-offset:3px}
+.ol-banner .ol-bk{font-weight:700;font-size:0.78em;letter-spacing:.06em;text-transform:uppercase;color:#fff;text-shadow:0 1px 0 #a34500}
+.ol-banner .ol-bt{font:400 1.35em/1.05 "KidsRock","Fredoka",sans-serif;color:#fff;text-shadow:0 0.08em 0 #a34500}
+.ol-banner .ol-bp{font-weight:700;font-size:0.95em}
+.ol-banner .ol-be{font-size:0.8em;font-weight:600;opacity:.9}
+@keyframes ol-in{from{opacity:0;transform:translateY(-0.6em) scale(.92)}to{opacity:1;transform:none}}
+.ol-chal{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;margin:8px 0 0;padding:7px 8px 7px 12px;border-radius:12px;background:linear-gradient(170deg,#ffb21e,#ff7a12);color:#3b1d00;font-size:13.5px;line-height:1.25}
+.ol-chal .ol-bk{width:100%;font-weight:700;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#fff}
+.ol-chal b{font-weight:700;font-size:15px;color:#fff;text-shadow:0 1px 0 #a34500}
+.ol-chal .ol-chip{margin-left:auto}
+@media (max-height:430px){ .ol-chal{margin-top:5px;padding:4px 6px 4px 10px} .ol-chal .ol-bk{width:auto} }
+/* ONLINE:END */
+</style>
 <main class="wrap">
   <header>
-    <p class="tag">Build 0.37</p>
+    <p class="tag">Build 0.38</p>
     <h1>TFIF Game Prototype</h1>
     <p class="lede">Pick a character and steer them from the start to the finish flag. The stages never end: each one is a little longer and harder, and your best is the furthest stage you reach. Every fifth stage ends with a trophy and confetti. On a phone it plays full screen with touch buttons.</p>
   </header>
@@ -1038,13 +1221,14 @@ function reset() {
 }
 function setState(s) { G.state = s; G.stateT = 0; }
 function selectStage(n) { G.sel = clamp(n, 1, nextStage()); G.n = G.sel; reset(); }
-function openMap() { confetti = []; selectStage(nextStage()); setState('map'); }
+function openMap() { if (NET.active) NET.end(false, G.coins); confetti = []; selectStage(nextStage()); setState('map'); }
 let wakeLock = null;
 async function keepAwake() {
   try { if (navigator.wakeLock && !wakeLock) { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); } } catch (e) {}
 }
-function startLevel(n) { G.n = n; G.sel = n; reset(); confetti = []; setState('intro'); sfx.start(); keepAwake(); }
+function startLevel(n) { if (NET.active) NET.end(false, G.coins); NET.clearLast(); G.n = n; G.sel = n; reset(); confetti = []; setState('intro'); sfx.start(); keepAwake(); }
 function stageClear() {
+  NET.end(true, G.coins);
   const pr = PR();
   pr.stars[G.n] = Math.max(pr.stars[G.n] || 0, G.coins);
   if (pr.done < G.n) pr.done = G.n;
@@ -1052,7 +1236,7 @@ function stageClear() {
   const fx = G.mode === 'runner' ? zx(LVL.len) : P.x + 7, fy = G.mode === 'runner' ? zy(groundY() - 84) : groundY() - 84;
   burst(fx - 26, fy, 60); burst(fx + 26, fy, 60);
 }
-function fail() { setState('fail'); sfx.fail(); keys.left = keys.right = false; }
+function fail() { NET.end(false, G.coins); setState('fail'); sfx.fail(); keys.left = keys.right = false; }
 
 /* Losing a heart: from an enemy, a fall into a gap, or a crash in the Flyer. */
 function loseHeart(why, fromX) {
@@ -1420,9 +1604,10 @@ function update(dt) {
   }
   if (G.state === 'intro') {
     if (G.mode === 'flyer') P.y = 92 + Math.sin(G.anim * 2.2) * 5;
-    if (G.stateT > 1.8) setState('play');
+    if (G.stateT > 1.8) { setState('play'); NET.begin(G.mode, G.n, CHARS[G.char].key, stagePar()); }
     return;
   }
+  if (G.state === 'play') NET.tick(dt);
   if (G.freeze > 0) { G.freeze -= dt; return; }
   if (G.shake > 0) G.shake -= dt;
 
@@ -2185,13 +2370,14 @@ function mapLayout() {
   return {
     nodes: [0, 1, 2, 3, 4].map(i => ({ n: s0 + i, x: 52 + i * 70, y: i % 2 ? 98 : 120, r: 15 })),
     play: { x: W / 2 - 44, y: 170, w: 88, h: 20 },
-    back: { x: 6, y: 5, w: 74, h: 13 }, soundChip: { x: W - 66, y: 5, w: 60, h: 13 }
+    back: { x: 6, y: 5, w: 74, h: 13 }, soundChip: { x: W - 66, y: 5, w: 60, h: 13 },
+    ranks: NET.on ? { x: W - 66, y: 21, w: 60, h: 13 } : null
   };
 }
 function drawMap() {
   const L = mapLayout(), pr = PR(), c = CHARS[G.char];
   box(ctx, 'rgba(12,16,40,0.55)', 0, 0, W, H);
-  chip(L.back, 'CHARACTERS'); chip(L.soundChip, muted ? 'SOUND OFF' : 'SOUND ON');
+  chip(L.back, 'CHARACTERS'); chip(L.soundChip, muted ? 'SOUND OFF' : 'SOUND ON'); if (L.ranks) glossBtn(L.ranks, 'RANKS', 'orange', false, 6.6);
   drawText('PICK A STAGE', W / 2, 6, 2, '#ffffff', 1);
   drawText((pr.done ? 'BEST: STAGE ' + pr.done + '      ' : '') + totalStars() + ' STARS', W / 2, 24, 1, '#ffe14a', 1);
   ctx.save(); ctx.setLineDash([3, 4]); g0(ctx);
@@ -2225,7 +2411,7 @@ function drawMap() {
 const SPLASH_END = 3.8;
 const FRONT_STATES = ['gate', 'splash', 'modes', 'scores'];
 function startSplash() { ensureAudio(); confetti = []; G.boom = false; G.landed = {}; G.introSel = 0; setState('splash'); }
-function openScores() { ensureAudio(); confetti = []; setState('scores'); tone(520, 700, 0.06, 'triangle', 0.06); }
+function openScores() { ensureAudio(); if (NET.on) { UI.ranks(); return; } confetti = []; setState('scores'); tone(520, 700, 0.06, 'triangle', 0.06); }
 function backToIntro() { confetti = []; G.boom = true; G.landed = { all: 1 }; setState('splash'); G.stateT = SPLASH_END + 0.5; }
 /* Intro end frame buttons, and the Scores screen's back button. */
 const introBtns = () => [{ id: 'play', x: W / 2 - 76, y: 196, w: 68, h: 17 }, { id: 'score', x: W / 2 + 8, y: 196, w: 68, h: 17 }];
@@ -2235,7 +2421,8 @@ function introTap(gx, gy) {
   if (G.stateT < SPLASH_END) { G.stateT = SPLASH_END; G.boom = true; G.landed = { all: 1 }; return; }
   for (const b of introBtns()) if (inRect({ x: b.x - 3, y: b.y - 3, w: b.w + 6, h: b.h + 6 }, gx, gy)) { b.id === 'play' ? openModes() : openScores(); return; }
 }
-function openModes() { confetti = []; G.modeSel = G.mode; setState('modes'); }
+function openModes() { if (NET.on && !NET.signedIn) { UI.signup(openModesNow); return; } openModesNow(); }
+function openModesNow() { confetti = []; G.modeSel = G.mode; setState('modes'); }
 function chooseMode(m) {
   ensureAudio();
   if (m !== G.mode) { G.mode = m; syncUI(); save(); }
@@ -2359,7 +2546,7 @@ function drawIntroArt(t, buttons) {
     introBtns().forEach((b, i) => {
       const k = Math.max(0.01, e);
       ctx.save(); ctx.translate(b.x + b.w / 2, b.y + b.h / 2); ctx.scale(k, k); ctx.translate(-b.x - b.w / 2, -b.y - b.h / 2);
-      glossBtn(b, i ? 'SCORE' : 'PLAY', i ? 'orange' : 'blue', t > SPLASH_END && G.introSel === i, 11.5);
+      glossBtn(b, i ? (NET.on ? 'RANKS' : 'SCORE') : 'PLAY', i ? 'orange' : 'blue', t > SPLASH_END && G.introSel === i, 11.5);
       ctx.restore();
     });
   }
@@ -2639,6 +2826,12 @@ function drawClear(blink) {
     drawText('X ' + G.coins, W / 2 - 8, 102, 2, '#ffffff');
   }
   glossBtn({ x: W / 2 - 52, y: 128, w: 104, h: 15 }, 'NEXT STAGE', 'blue', true, 9);
+  const won = NET.last;
+  if (won && won.cleared) {
+    const t = won.points + ' POINTS' + (won.bonus ? '   SPEED BONUS ' + won.bonus : '');
+    rr(ctx, W / 2 - 74, 154, 148, 15, 7, 'rgba(255,178,30,0.95)', '#ffffff', 1);
+    drawText(t, W / 2, 157, 1, '#3b1d00', 1, null);
+  }
 }
 function drawFail(blink) {
   box(ctx, 'rgba(12,16,40,0.45)', 0, 0, W, H);
@@ -2789,6 +2982,502 @@ function drawTouchPads() {
 /* =========================================================================
    Input
    ========================================================================= */
+/* ONLINE:BEGIN (written by online-import.py from online/online.js)
+   =========================================================================
+   Online: sign-up, play tracking and rankings. Everything here is switched
+   off until ONLINE_CFG has the project address and key, so the game plays
+   exactly as before without them.
+   ========================================================================= */
+const ONLINE_CFG = {
+  url: '',          /* Supabase project URL, e.g. https://abcd1234.supabase.co */
+  key: '',          /* Supabase publishable (anon) key: public, safe to have in the page */
+  privacy: '',      /* link to the privacy notice, if there is one */
+  prizes: 'Top players each week and each month can win prizes!'
+};
+const NET = (() => {
+  const on = !!(ONLINE_CFG.url && ONLINE_CFG.key);
+  const base = ONLINE_CFG.url.replace(/\/+$/, '');
+  const AKEY = 'tfif-auth', QKEY = 'tfif-queue', PKEY = 'tfif-player', SKEY = 'tfif-src';
+  const get = k => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } };
+  const put = (k, v) => { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+  let sess = get(AKEY), player = get(PKEY), queue = get(QKEY) || [];
+  const legacyKey = ONLINE_CFG.key.indexOf('eyJ') === 0;
+
+  /* where this visit came from: a LinkedIn post (?src=linkedin or utm_source), the home-screen app, or a client's website */
+  const qs = new URLSearchParams(location.search);
+  const srcNow = (qs.get('src') || qs.get('utm_source') || '').slice(0, 40);
+  if (srcNow && !get(SKEY)) put(SKEY, srcNow);
+  const source = () => srcNow || get(SKEY) || (document.referrer && !document.referrer.startsWith(location.origin) ? hostOf(document.referrer) : '') || '';
+  function hostOf(u) { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return ''; } }
+  const via = (() => {
+    let inFrame = false; try { inFrame = window.top !== window.self; } catch (e) { inFrame = true; }
+    if (inFrame) {
+      let h = qs.get('site') || '';
+      try { if (!h && location.ancestorOrigins && location.ancestorOrigins.length) h = hostOf(location.ancestorOrigins[location.ancestorOrigins.length - 1]); } catch (e) {}
+      if (!h && document.referrer) h = hostOf(document.referrer);
+      return ('embed:' + (h || 'site')).slice(0, 60);
+    }
+    const app = (window.matchMedia && (matchMedia('(display-mode: fullscreen)').matches || matchMedia('(display-mode: standalone)').matches)) || navigator.standalone;
+    return app ? 'app' : 'web';
+  })();
+
+  /* ---- talking to Supabase (plain fetch, no library) ---- */
+  function headers(auth) {
+    const h = { 'Content-Type': 'application/json', apikey: ONLINE_CFG.key };
+    if (auth && sess) h.Authorization = 'Bearer ' + sess.access_token;
+    else if (legacyKey) h.Authorization = 'Bearer ' + ONLINE_CFG.key;
+    return h;
+  }
+  async function req(path, body, auth) {
+    let r;
+    try { r = await fetch(base + path, { method: 'POST', headers: headers(auth), body: JSON.stringify(body || {}) }); }
+    catch (e) { const err = new Error('OFFLINE'); err.offline = true; throw err; }
+    const txt = await r.text(); let j = null; try { j = txt ? JSON.parse(txt) : null; } catch (e) {}
+    if (!r.ok) {
+      const err = new Error((j && (j.message || j.msg || j.error_description || j.error)) || ('HTTP ' + r.status));
+      err.status = r.status; err.code = j && (j.error_code || j.code); throw err;
+    }
+    return j;
+  }
+  function setSess(s) {
+    sess = { access_token: s.access_token, refresh_token: s.refresh_token,
+             expires_at: s.expires_at || Math.floor(Date.now() / 1000) + (s.expires_in || 3600),
+             email: (s.user && s.user.email) || (sess && sess.email) || '' };
+    put(AKEY, sess);
+  }
+  let refreshing = null;
+  async function fresh() {
+    if (!sess) return false;
+    if (Date.now() / 1000 < sess.expires_at - 90) return true;
+    if (!refreshing) refreshing = req('/auth/v1/token?grant_type=refresh_token', { refresh_token: sess.refresh_token })
+      .then(s => { setSess(s); return true; })
+      .catch(e => { if (!e.offline && e.status && e.status < 500) signOut(); return false; })
+      .finally(() => { refreshing = null; });
+    return refreshing;
+  }
+  async function rpc(fn, args) {
+    const ok = sess ? await fresh() : false;
+    return req('/rest/v1/rpc/' + fn, args || {}, ok);
+  }
+
+  /* ---- signing up and in ---- */
+  const sendCode = email => req('/auth/v1/otp', { email, create_user: true });
+  async function verify(email, code) {
+    setSess(await req('/auth/v1/verify', { type: 'email', email, token: code }));
+    const prof = await rpc('my_profile');
+    if (prof && prof.nickname) { setPlayer(prof); afterSignIn(); }
+    return prof;
+  }
+  async function register(d) {
+    const r = await rpc('register_player', { p_nickname: d.nickname, p_phone: d.phone, p_company: d.company,
+                                             p_marketing: !!d.marketing, p_source: source() || null });
+    setPlayer({ nickname: r.nickname }); afterSignIn(); return r;
+  }
+  function setPlayer(p) { player = { nickname: p.nickname }; put(PKEY, player); }
+  function afterSignIn() { touch(); flush(); }
+  function signOut() { sess = null; player = null; queue = []; put(AKEY, null); put(PKEY, null); put(QKEY, null); }
+  const nicknameFree = n => rpc('nickname_available', { p_nickname: n });
+  function touch() { if (on && sess && player) rpc('touch', { p_via: via, p_source: source() || null }).catch(() => {}); }
+
+  /* ---- recording plays: kept on the device, sent when there's a connection ---- */
+  let cur = null, last = null, flushing = false;
+  const uid = () => (crypto.randomUUID ? crypto.randomUUID() : 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10));
+  function begin(mode, stage, hero, par) {
+    if (!on || !player) { cur = null; return; }
+    cur = { client_id: uid(), mode, stage, character: hero, par: Math.round(par * 10) / 10, seconds: 0 };
+  }
+  function tick(dt) { if (cur) cur.seconds += dt; }
+  function end(cleared, stars) {
+    if (!cur) return null;
+    const p = cur; cur = null;
+    if (p.seconds < 1) return null;
+    p.cleared = !!cleared; p.stars = Math.max(0, stars | 0); p.seconds = Math.round(p.seconds * 10) / 10;
+    p.via = via; p.played_at = new Date().toISOString();
+    queue.push(p); if (queue.length > 400) queue = queue.slice(-400); put(QKEY, queue);
+    flush();
+    /* the same sums as the database, to show straight away */
+    const bonus = p.cleared && p.par > 0 ? Math.max(0, Math.min(100, Math.round(100 * (1.5 * p.par - p.seconds) / (0.5 * p.par)))) : 0;
+    last = { points: p.cleared ? p.stage * 100 + p.stars * 10 + bonus : p.stars * 10, bonus, cleared: p.cleared };
+    return last;
+  }
+  async function flush() {
+    if (!on || !sess || !player || flushing || !queue.length) return;
+    flushing = true;
+    try {
+      const batch = queue.slice(0, 50);
+      await rpc('record_plays', { p_plays: batch });
+      const sent = new Set(batch.map(b => b.client_id));
+      queue = queue.filter(q => !sent.has(q.client_id)); put(QKEY, queue);
+      if (queue.length) setTimeout(flush, 400);
+    } catch (e) {
+      if (/NO_PROFILE/.test(e.message)) { player = null; put(PKEY, null); }
+    } finally { flushing = false; }
+  }
+  if (on) {
+    addEventListener('online', flush);
+    setInterval(flush, 45000);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) { flush(); touch(); } });
+    if (sess && player) { fresh().then(ok => { if (ok) { touch(); flush(); } }); }
+  }
+
+  return {
+    on, via, sendCode, verify, register, signOut, nicknameFree, begin, tick, end, flush, rpc,
+    get signedIn() { return !!(on && sess && player); },
+    get hasSession() { return !!sess; },
+    get email() { return sess ? sess.email : ''; },
+    get nickname() { return player ? player.nickname : ''; },
+    get active() { return !!cur; },
+    get last() { return last; }, clearLast() { last = null; }
+  };
+})();
+
+/* The published game shows only the game, filling its window or the box on a website.
+   The review page, with the notes and the tuning sliders, is the same link with ?notes on the end. */
+const LIVE = NET.on || !/[?&]notes\b/i.test(location.search);
+if (LIVE) document.title = 'TFIF Game';
+
+/* ---- "This week's challenge": set on the dashboard, shown on the opening screen and the rankings ---- */
+const CHALLENGE = (() => {
+  const CK = 'tfif-challenge';
+  let c = null; try { c = JSON.parse(localStorage.getItem(CK) || 'null'); } catch (e) {}
+  const now = () => (c && c.title && (!c.ends_at || new Date(c.ends_at) > new Date()) ? c : null);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
+  const kicker = x => x.period === 'month' ? 'This month\'s challenge' : 'This week\'s challenge';
+  const ends = x => {
+    if (!x.ends_at) return '';
+    const d = new Date(new Date(x.ends_at).getTime() - 1000);   /* "ends Sunday", not "ends Monday 00:00" */
+    return 'Ends ' + d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Africa/Johannesburg' });
+  };
+  function load() {
+    if (!NET.on) return;
+    NET.rpc('current_challenge').then(r => {
+      c = r && r.title ? r : null;
+      try { c ? localStorage.setItem(CK, JSON.stringify(c)) : localStorage.removeItem(CK); } catch (e) {}
+    }).catch(() => {});   /* offline: keep the one we had */
+  }
+  let el = null;
+  function banner() {
+    if (!NET.on) return;
+    el = document.createElement('button');
+    el.type = 'button'; el.className = 'ol-banner'; el.hidden = true;
+    document.getElementById('stage').appendChild(el);
+    el.addEventListener('pointerdown', e => e.stopPropagation());
+    el.addEventListener('click', e => { e.stopPropagation(); const x = now(); if (x) UI.ranks(x); });
+    let shown = '';
+    setInterval(() => {
+      const x = now(), want = !!x && G.state === 'splash' && G.stateT > SPLASH_END + 0.4 && !UI.open && document.getElementById('rotate').hidden;
+      if (!want) { if (!el.hidden) { el.hidden = true; shown = ''; } return; }
+      const key = JSON.stringify(x);
+      if (key !== shown) {
+        shown = key;
+        el.innerHTML = `<span class="ol-bk">★ ${esc(kicker(x))}</span><span class="ol-bt">${esc(x.title)}</span>` +
+          (x.prize ? `<span class="ol-bp">Prize: ${esc(x.prize)}</span>` : '') +
+          `<span class="ol-be">${esc(ends(x))} · <u>See the board</u></span>`;
+      }
+      /* sits in the top-left corner of the picture, whatever size the game is shown at */
+      const r = cv.getBoundingClientRect(), sr = el.parentNode.getBoundingClientRect();
+      el.style.left = (r.left - sr.left + r.width * 0.022) + 'px';
+      el.style.top = (r.top - sr.top + r.width * 0.022) + 'px';
+      el.style.width = (r.width * 0.29) + 'px';
+      el.style.fontSize = Math.max(9, r.width * 0.0158) + 'px';
+      el.hidden = false;
+    }, 150);
+  }
+  /* the strip at the top of the rankings */
+  function strip() {
+    const x = now(); if (!x) return '';
+    return `<div class="ol-chal"><span class="ol-bk">★ ${esc(kicker(x))}</span><b>${esc(x.title)}</b>` +
+      (x.prize ? `<span>Prize: ${esc(x.prize)}</span>` : '') + `<span>${esc(ends(x))}</span>` +
+      `<button type="button" class="ol-chip" data-chal="1">Show this board</button></div>`;
+  }
+  if (NET.on) { load(); setInterval(load, 10 * 60 * 1000); document.addEventListener('visibilitychange', () => { if (!document.hidden) load(); }); }
+  return { get now() { return now(); }, banner, strip };
+})();
+
+/* ---- the screens: sign-up and rankings, as a panel over the game ---- */
+const UI = (() => {
+  if (!NET.on) return { open: false, signup() { return false; }, ranks() { return false; } };
+  document.title = 'TFIF Game';
+  const root = document.createElement('div');
+  root.className = 'ol'; root.hidden = true;
+  root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true');
+  document.getElementById('stage').appendChild(root);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  const fmt = n => Number(n).toLocaleString('en-ZA', { maximumFractionDigits: 1 });
+  let then = null, view = '', form = { nickname: '', email: '', phone: '', company: '', consent: false, marketing: false };
+  let rk = { mode: 'runner', period: 'week', metric: 'points' };
+
+  function show(html, v) {
+    view = v; root.innerHTML = '<div class="ol-card ol-' + v + '">' + html + '</div>'; root.hidden = false;
+    keys.up = keys.down = keys.left = keys.right = keys.fire = false;
+    const f = root.querySelector('[autofocus]'); if (f && !TOUCH) setTimeout(() => f.focus(), 30);
+  }
+  function close() { root.hidden = true; root.innerHTML = ''; view = ''; try { cv.focus({ preventScroll: true }); } catch (e) {} }
+  function done() { const t = then; then = null; close(); if (t) t(); }
+  root.addEventListener('keydown', e => { if (e.key === 'Escape' && view === 'ranks') { e.preventDefault(); close(); } e.stopPropagation(); });
+  root.addEventListener('keyup', e => e.stopPropagation());
+  root.addEventListener('pointerdown', e => e.stopPropagation());
+  const msg = (t, bad) => { const m = root.querySelector('.ol-msg'); if (m) { m.textContent = t || ''; m.classList.toggle('bad', !!bad); } };
+  const busy = b => root.querySelectorAll('button, input').forEach(x => { x.disabled = b; });
+  const oops = e => e.offline ? 'No internet connection. Check it and try again.'
+    : /rate|limit|security purposes/i.test(e.message) ? 'Please wait a minute before asking for another code.'
+    : /expired|invalid|otp/i.test(e.message) ? 'That code is wrong or has expired. Check it, or ask for a new one.'
+    : /NICKNAME_TAKEN/.test(e.message) ? 'Someone already has that player name. Try another one.'
+    : 'Something went wrong. Please try again.';
+
+  /* -- step 1: details -- */
+  function signupView(returning) {
+    const priv = ONLINE_CFG.privacy ? ' <a href="' + esc(ONLINE_CFG.privacy) + '" target="_blank" rel="noopener">Privacy notice</a>' : '';
+    show(`
+      <h2>${returning ? 'Your player details' : 'Join the game'}</h2>
+      <p class="ol-sub">${returning ? 'One last step before you play.' : 'Sign up once, then just play. ' + esc(ONLINE_CFG.prizes)}</p>
+      <form class="ol-form" novalidate>
+        <label>Player name<input name="nickname" maxlength="16" autocomplete="nickname" placeholder="e.g. SpicyAnn" value="${esc(form.nickname)}" autofocus><small>Shown on the rankings. Make one up!</small></label>
+        ${returning ? '' : `<label>Email<input name="email" type="email" autocomplete="email" inputmode="email" placeholder="you@company.com" value="${esc(form.email)}"><small>We'll email you a code to check it's you.</small></label>`}
+        <label>Mobile number<input name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="082 123 4567" value="${esc(form.phone)}"><small>Only used if you win.</small></label>
+        <label>Company<input name="company" autocomplete="organization" placeholder="Where you work" value="${esc(form.company)}"></label>
+        <label class="ol-tick"><input type="checkbox" name="consent" ${form.consent ? 'checked' : ''}><span>I agree that these details may be stored to run the game and its competitions, and to contact me if I win.${priv}</span></label>
+        <label class="ol-tick"><input type="checkbox" name="marketing" ${form.marketing ? 'checked' : ''}><span>Keep me posted about new competitions and news (optional).</span></label>
+        <p class="ol-msg" role="status"></p>
+        <div class="ol-row"><button class="ol-go" type="submit">${returning ? 'Save and play' : 'Send my code'}</button>
+        ${returning ? '<button type="button" class="ol-link" data-act="out">Not you? Sign out</button>' : '<button type="button" class="ol-link" data-act="signin">Already signed up? Sign in</button>'}</div>
+      </form>`, returning ? 'details' : 'signup');
+    const f = root.querySelector('form');
+    f.addEventListener('submit', async e => {
+      e.preventDefault();
+      const fd = new FormData(f);
+      form.nickname = (fd.get('nickname') || '').trim(); form.phone = (fd.get('phone') || '').trim(); form.company = (fd.get('company') || '').trim();
+      if (!returning) form.email = (fd.get('email') || '').trim().toLowerCase();
+      form.consent = !!fd.get('consent'); form.marketing = !!fd.get('marketing');
+      const bad = !/^[A-Za-z0-9][A-Za-z0-9 _.-]{1,15}$/.test(form.nickname) ? 'Player name: 2 to 16 letters or numbers (spaces, dots, dashes and underscores are fine too).'
+        : !returning && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(form.email) ? 'Please check your email address.'
+        : form.phone.replace(/\D/g, '').length < 9 ? 'Please check your mobile number.'
+        : !form.company ? 'Please fill in your company.'
+        : !form.consent ? 'Please tick the box to agree, so we can run the competition.' : '';
+      if (bad) { msg(bad, true); return; }
+      busy(true); msg(returning ? 'Saving…' : 'Sending your code…');
+      try {
+        if (!(await NET.nicknameFree(form.nickname))) { busy(false); msg('Someone already has that player name. Try another one.', true); return; }
+        if (returning) { await NET.register(form); welcomeView(); }
+        else { await NET.sendCode(form.email); codeView(); }
+      } catch (err) { busy(false); msg(oops(err), true); }
+    });
+    root.querySelector('[data-act]').addEventListener('click', e => {
+      if (e.target.dataset.act === 'out') { NET.signOut(); signupView(false); } else signinView();
+    });
+  }
+  /* -- step 2: the emailed code -- */
+  function codeView() {
+    show(`
+      <h2>Check your email</h2>
+      <p class="ol-sub">We sent a 6-digit code to <b>${esc(form.email)}</b>. It can take a minute; check your spam folder too.</p>
+      <form class="ol-form ol-code" novalidate>
+        <label>Your code<input name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="123456" autofocus></label>
+        <p class="ol-msg" role="status"></p>
+        <div class="ol-row"><button class="ol-go" type="submit">Let's play</button>
+        <button type="button" class="ol-link" data-act="resend">Send a new code</button>
+        <button type="button" class="ol-link" data-act="back">Change email</button></div>
+      </form>`, 'code');
+    const f = root.querySelector('form'), inp = f.querySelector('input');
+    inp.addEventListener('input', () => { inp.value = inp.value.replace(/\D/g, ''); if (inp.value.length === 6) f.requestSubmit ? f.requestSubmit() : f.dispatchEvent(new Event('submit')); });
+    f.addEventListener('submit', async e => {
+      e.preventDefault();
+      const code = inp.value.replace(/\D/g, '');
+      if (code.length < 6) { msg('Type the 6 numbers from the email.', true); return; }
+      busy(true); msg('Checking…');
+      try {
+        const prof = await NET.verify(form.email, code);
+        if (prof && prof.nickname) welcomeView(true);
+        else if (form.nickname && form.consent) { await NET.register(form); welcomeView(); }
+        else signupView(true);
+      } catch (err) { busy(false); msg(oops(err), true); }
+    });
+    root.querySelector('[data-act=resend]').addEventListener('click', async () => {
+      busy(true); msg('Sending a new code…');
+      try { await NET.sendCode(form.email); busy(false); msg('New code sent.'); } catch (err) { busy(false); msg(oops(err), true); }
+    });
+    root.querySelector('[data-act=back]').addEventListener('click', () => (form.nickname ? signupView(false) : signinView()));
+  }
+  /* -- signing in again (new phone, cleared browser) -- */
+  function signinView() {
+    show(`
+      <h2>Welcome back</h2>
+      <p class="ol-sub">Type the email you signed up with and we'll send you a code.</p>
+      <form class="ol-form" novalidate>
+        <label>Email<input name="email" type="email" autocomplete="email" inputmode="email" value="${esc(form.email)}" autofocus></label>
+        <p class="ol-msg" role="status"></p>
+        <div class="ol-row"><button class="ol-go" type="submit">Send my code</button>
+        <button type="button" class="ol-link" data-act="new">New here? Sign up</button></div>
+      </form>`, 'signin');
+    const f = root.querySelector('form');
+    f.addEventListener('submit', async e => {
+      e.preventDefault();
+      form.email = (new FormData(f).get('email') || '').trim().toLowerCase(); form.nickname = ''; form.consent = false;
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(form.email)) { msg('Please check your email address.', true); return; }
+      busy(true); msg('Sending your code…');
+      try { await NET.sendCode(form.email); codeView(); } catch (err) { busy(false); msg(oops(err), true); }
+    });
+    root.querySelector('[data-act=new]').addEventListener('click', () => signupView(false));
+  }
+  function welcomeView(back) {
+    show(`
+      <h2>${back ? 'Welcome back' : 'You\'re in'}, ${esc(NET.nickname)}!</h2>
+      <p class="ol-sub">Every stage you play now counts towards the rankings: points, stars, how far you get and how long you play.</p>
+      <div class="ol-row"><button class="ol-go" type="button" autofocus>Play</button>${INSTALL.offerHtml()}</div>`, 'welcome');
+    root.querySelector('.ol-go').addEventListener('click', done);
+    INSTALL.wire(root);
+  }
+  function offlineView() {
+    show(`
+      <h2>You're offline</h2>
+      <p class="ol-sub">Signing up needs an internet connection the first time. Connect and try again.</p>
+      <div class="ol-row"><button class="ol-go" type="button" autofocus>Try again</button></div>`, 'offline');
+    root.querySelector('.ol-go').addEventListener('click', () => signup(then));
+  }
+
+  /* ---- rankings ---- */
+  const MODES = [['runner', 'Runner'], ['flyer', 'Flyer']];
+  const PERIODS = [['week', 'This week'], ['month', 'This month'], ['all', 'All time'], ['lastweek', 'Last week'], ['lastmonth', 'Last month']];
+  const METRICS = [['points', 'Points'], ['stars', 'Stars'], ['stage', 'Furthest stage'], ['time', 'Time played']];
+  const unit = { points: 'pts', stars: 'stars', stage: '', time: 'min' };
+  const valTxt = (m, v) => m === 'stage' ? 'Stage ' + fmt(v) : fmt(v) + ' ' + unit[m];
+  const chips = (list, cur, name) => list.map(([k, t]) => `<button type="button" class="ol-chip" data-${name}="${k}" aria-pressed="${k === cur}">${t}</button>`).join('');
+  const TIERS = [['Bronze', 0], ['Silver', 1500], ['Gold', 5000], ['Platinum', 12000], ['Diamond', 25000]];
+  const heroImg = k => { const c = CHARS.find(x => x.key === k) || CHARS[0]; return c.select ? c.select.src : ''; };
+  const badge = (t, big) => `<span class="ol-badge b-${esc(t)}${big ? ' big' : ''}" title="${esc(t)} tier"><i></i><b>${esc(t)}</b></span>`;
+  function ranksView() {
+    show(`
+      <div class="ol-head">
+        <h2>Rankings</h2>
+        <div class="ol-tabs" role="group" aria-label="Game">${chips(MODES, rk.mode, 'mode')}</div>
+        <button type="button" class="ol-x" aria-label="Close">✕</button>
+      </div>
+      ${CHALLENGE.strip()}
+      <div class="ol-filters"><div role="group" aria-label="Period">${chips(PERIODS, rk.period, 'period')}</div><div role="group" aria-label="Ranked by">${chips(METRICS, rk.metric, 'metric')}</div></div>
+      <div class="ol-board" aria-live="polite"><p class="ol-empty">Loading…</p></div>
+      <div class="ol-me"></div>`, 'ranks');
+    root.querySelector('.ol-x').addEventListener('click', close);
+    root.querySelectorAll('.ol-chip').forEach(b => b.addEventListener('click', () => {
+      const d = b.dataset; if (d.mode) rk.mode = d.mode; if (d.period) rk.period = d.period; if (d.metric) rk.metric = d.metric;
+      if (d.chal && CHALLENGE.now) toChallenge(CHALLENGE.now);
+      root.querySelectorAll('.ol-chip').forEach(c => { const k = c.dataset; c.setAttribute('aria-pressed', String(k.mode ? k.mode === rk.mode : k.period ? k.period === rk.period : k.metric === rk.metric)); });
+      loadRanks();
+    }));
+    loadRanks();
+  }
+  function podium(rows, metric) {
+    const spot = (r, place) => r
+      ? `<div class="ol-pod p${place}${r.me ? ' is-me' : ''}">
+           ${place === 1 ? '<span class="ol-glow" aria-hidden="true"></span>' : ''}
+           <img src="${heroImg(r.hero)}" alt="" class="ol-hero">
+           <div class="ol-step"><span class="ol-place">${place}</span>
+             <span class="ol-pname">${esc(r.nickname)}${r.me ? ' <em>you</em>' : ''}</span>
+             <span class="ol-pval">${valTxt(metric, r.value)}</span>${badge(r.tier)}</div>
+         </div>`
+      : `<div class="ol-pod p${place} empty"><div class="ol-hero ol-ghost">?</div>
+           <div class="ol-step"><span class="ol-place">${place}</span><span class="ol-pname">Could be you!</span></div></div>`;
+    const at = n => rows.find(r => r.rank === n);
+    return `<div class="ol-podium" role="list" aria-label="Top three">${spot(at(2), 2)}${spot(at(1), 1)}${spot(at(3), 3)}</div>`;
+  }
+  let ticket = 0;
+  async function loadRanks() {
+    const my = ++ticket, board = root.querySelector('.ol-board'), me = root.querySelector('.ol-me');
+    const { mode, period, metric } = rk;
+    board.innerHTML = '<p class="ol-empty">Loading…</p>';
+    try {
+      await NET.flush();
+      const [rows0, stats] = await Promise.all([
+        NET.rpc('leaderboard', { p_mode: mode, p_period: period, p_metric: metric, p_limit: 50 }),
+        NET.signedIn ? NET.rpc('my_stats', { p_mode: mode }).catch(() => null) : Promise.resolve(null)]);
+      if (my !== ticket || view !== 'ranks') return;
+      const rows = rows0 || [];
+      const rest = rows.filter(r => r.rank > 3);
+      let list = '';
+      if (rest.length) {
+        list = '<ol class="ol-rows">'; let prev = 3;
+        for (const r of rest) {
+          if (r.rank > prev + 1) list += '<li class="ol-gap" aria-hidden="true">⋯</li>';
+          prev = r.rank;
+          list += `<li class="${r.me ? 'is-me' : ''}"><span class="ol-rank">${r.rank}</span><img class="ol-mini" src="${heroImg(r.hero)}" alt=""><span class="ol-name">${esc(r.nickname)}${r.me ? ' <em>you</em>' : ''}</span>${badge(r.tier)}<span class="ol-val">${valTxt(metric, r.value)}</span></li>`;
+        }
+        list += '</ol>';
+      } else list = `<p class="ol-empty">${rows.length ? 'Only ' + rows.length + ' on the board so far. Climb onto the podium!' : 'No one on the board yet. Play a stage and be the first!'}</p>`;
+      board.innerHTML = podium(rows, metric) + `<div class="ol-list">${list}</div>`;
+      const meRow = board.querySelector('.ol-list li.is-me'); if (meRow) meRow.scrollIntoView({ block: 'nearest' });
+
+      /* your standing: position, how far to the next player, and the tier ladder */
+      const mine = rows.find(r => r.me), ahead = mine && rows.find(r => r.rank === mine.rank - 1);
+      const total = rows.length ? rows[0].players : 0;
+      const pname = PERIODS.find(p => p[0] === period)[1].toLowerCase();
+      let pos = '';
+      if (!NET.signedIn) pos = `<div class="ol-pos"><span>Sign up to get your name on the board.</span><button type="button" class="ol-go ol-small" data-act="join">Join</button></div>`;
+      else if (mine) {
+        const beat = total > 1 ? Math.round(100 * (total - mine.rank) / (total - 1)) : 100;
+        const gap = !ahead ? '' : metric === 'stage' ? `Clear one more stage to pass <b>${esc(ahead.nickname)}</b>.`
+          : `Get ${valTxt(metric, Math.max(0, ahead.value - mine.value) + (metric === 'time' ? 0.1 : 1))} more to pass <b>${esc(ahead.nickname)}</b>.`;
+        pos = `<div class="ol-pos"><span class="ol-big">#${mine.rank}</span><span><b>of ${fmt(total)}</b> players ${pname}<br>${mine.rank === 1 ? 'You\'re in the lead!' : 'Ahead of ' + beat + '% of players. ' + gap}</span></div>`;
+      } else pos = `<div class="ol-pos"><span>You're not on this board yet${period.startsWith('last') ? '' : '. Play a stage to get on it'}.</span></div>`;
+      let ladder = '';
+      if (stats) {
+        const i = TIERS.findIndex(t => t[0] === stats.tier), next = TIERS[i + 1];
+        const pct = next ? Math.max(3, Math.min(100, 100 * (stats.points - TIERS[i][1]) / (next[1] - TIERS[i][1]))) : 100;
+        const counts = stats.tier_counts || {};
+        ladder = `<div class="ol-ladder" aria-label="Tiers">${TIERS.map(([t, at], k) =>
+          `<div class="ol-rung${k < i ? ' done' : k === i ? ' here' : ''}">${badge(t, k === i)}<small>${k === i ? 'You' : (counts[t] || 0) + ' player' + (counts[t] === 1 ? '' : 's')}</small>${k < TIERS.length - 1 ? `<span class="ol-bar"><span style="width:${k < i ? 100 : k === i ? pct : 0}%"></span></span>` : ''}</div>`).join('')}</div>
+          <p class="ol-next">${fmt(stats.points)} pts all time · ${next ? fmt(next[1] - stats.points) + ' pts to ' + next[0] : 'top tier reached!'}</p>`;
+      }
+      let foot = INSTALL.offerHtml();
+      if (NET.signedIn) foot += `<button type="button" class="ol-link ol-out" data-act="out">${esc(NET.nickname)} · sign out</button>`;
+      me.innerHTML = pos + `<div class="ol-tierbox">${ladder}</div><div class="ol-foot">${foot}</div>`;
+      INSTALL.wire(me);
+      const j = me.querySelector('[data-act=join]'); if (j) j.addEventListener('click', () => signup(() => openModes()));
+      const o = me.querySelector('[data-act=out]'); if (o) o.addEventListener('click', () => { if (confirmOut()) { NET.signOut(); loadRanks(); } });
+    } catch (err) {
+      if (my !== ticket) return;
+      board.innerHTML = `<p class="ol-empty">${err.offline ? 'No internet connection, so the rankings can\'t load right now.' : 'The rankings couldn\'t load. Please try again.'}</p>`;
+      me.innerHTML = '';
+    }
+  }
+  function confirmOut() { return true; }   /* no browser pop-ups: they freeze the game */
+
+  function signup(cb) {
+    then = cb || null;
+    if (NET.signedIn) { done(); return true; }
+    if (!navigator.onLine) { offlineView(); return true; }
+    if (NET.hasSession) signupView(true); else signupView(false);
+    return true;
+  }
+  function toChallenge(x) { rk.mode = x.mode === 'both' ? G.mode : x.mode; rk.period = x.period || 'week'; rk.metric = x.metric || 'points'; }
+  function ranks(x) { rk.mode = G.mode; if (x && x.title) toChallenge(x); ranksView(); return true; }
+  return { get open() { return !root.hidden; }, signup, ranks };
+})();
+
+/* ---- "add to home screen": the app icon ---- */
+const INSTALL = (() => {
+  let deferred = null;
+  addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferred = e; });
+  const standalone = () => (window.matchMedia && (matchMedia('(display-mode: fullscreen)').matches || matchMedia('(display-mode: standalone)').matches)) || navigator.standalone;
+  const ios = () => /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  let inFrame = false; try { inFrame = window.top !== window.self; } catch (e) { inFrame = true; }
+  const can = () => !standalone() && !inFrame && location.protocol === 'https:' && (deferred || (ios() && TOUCH));
+  function offerHtml() { return can() ? '<button type="button" class="ol-link ol-install" data-act="install">Add the game to your home screen</button>' : ''; }
+  function wire(el) {
+    const b = el.querySelector('[data-act=install]'); if (!b) return;
+    b.addEventListener('click', async () => {
+      if (deferred) { deferred.prompt(); try { await deferred.userChoice; } catch (e) {} deferred = null; b.remove(); return; }
+      b.outerHTML = '<p class="ol-hint">On iPhone: tap the <b>Share</b> button at the bottom of Safari, then <b>Add to Home Screen</b>.</p>';
+    });
+  }
+  return { offerHtml, wire, can };
+})();
+CHALLENGE.banner();
+
+/* the speed bonus measures against the quickest the stage can possibly be done */
+function stagePar() {
+  if (!LVL) return 0;
+  return G.mode === 'runner' ? LVL.len / 115 : LVL.len / (LVL.speed * 1.35);
+}
+/* ONLINE:END */
 function goUp() {
   ensureAudio();
   const s = G.state;
@@ -2835,6 +3524,7 @@ function mapTap(gx, gy) {
   ensureAudio();
   if (inRect(L.back, gx, gy)) { toTitle(); return; }
   if (inRect(L.soundChip, gx, gy)) { setMuted(!muted); return; }
+  if (L.ranks && inRect(L.ranks, gx, gy)) { UI.ranks(); return; }
   if (inRect(L.play, gx, gy)) { startLevel(G.sel); return; }
   for (const n of L.nodes) if (Math.hypot(gx - n.x, gy - n.y) < n.r + 8) { if (n.n === G.sel) startLevel(n.n); else pickStage(n.n); return; }
 }
@@ -2842,6 +3532,7 @@ function setMuted(v) { muted = !!v; if (!muted) ensureAudio(); syncUI(); save();
 
 const KEYMAP = { x: 'fire', X: 'fire', f: 'fire', F: 'fire', Shift: 'fire', ArrowLeft: 'left', a: 'left', A: 'left', ArrowRight: 'right', d: 'right', D: 'right', ArrowDown: 'down', s: 'down', S: 'down', ArrowUp: 'up', w: 'up', W: 'up', ' ': 'up', Spacebar: 'up' };
 window.addEventListener('keydown', e => {
+  if (UI.open) return;
   const tag = e.target && e.target.tagName;
   if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
   if (e.metaKey || e.ctrlKey || e.altKey) return;
@@ -2862,6 +3553,7 @@ window.addEventListener('keydown', e => {
   else if (act === 'fire') { keys.fire = true; e.preventDefault(); }
   else if (k === 'p' || k === 'P') { if (!e.repeat) togglePause(); }
   else if (k === 'm' || k === 'M') { if (!e.repeat) setMuted(!muted); }
+  else if ((k === 'r' || k === 'R') && NET.on && (G.state === 'map' || G.state === 'splash' || G.state === 'title')) { if (!e.repeat) UI.ranks(); }
   else if (k === '1') setMode('runner');
   else if (k === '2') setMode('flyer');
   else if (k === 'c' || k === 'C' || k === 'Escape') {
@@ -2973,7 +3665,7 @@ function apply(d) {
   if (Number.isInteger(d.char) && d.char >= 0 && d.char < CHARS.length) G.char = d.char;
 }
 function fitStage() {
-  if (!TOUCH) return;
+  if (!TOUCH && !LIVE) return;
   const st = $('stage'), cs = getComputedStyle(st);
   const sw = st.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
   const sh = st.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
@@ -2985,7 +3677,8 @@ function fitStage() {
   const fsb = $('btn-full-touch');
   fsb.hidden = !(stage.requestFullscreen && document.fullscreenEnabled !== false) || !!document.fullscreenElement || portrait;
 }
-if (TOUCH) {
+if (LIVE) document.body.classList.add('live');
+if (TOUCH || LIVE) {
   addEventListener('resize', fitStage);
   if (window.visualViewport) visualViewport.addEventListener('resize', fitStage);
   document.addEventListener('fullscreenchange', fitStage);
@@ -2997,6 +3690,7 @@ if (TOUCH) {
     } catch (e) {}
   });
 }
+addEventListener('pagehide', () => { if (NET.active) NET.end(false, G.coins); });
 document.addEventListener('visibilitychange', () => { if (document.hidden && G.state === 'play') G.state = 'paused'; if (!document.hidden && G.state !== 'title') keepAwake(); });
 
 function save() { try { localStorage.setItem(KEY, JSON.stringify({ prog: G.prog, tune: T, muted, mode: G.mode, char: G.char })); } catch (e) {} }
@@ -3020,6 +3714,7 @@ function frame(t) {
 }
 function boot(d) {
   load(); apply(d);
+  if (LIVE) { T.speed = T.gravity = T.power = T.spacing = 1; }   /* everyone plays the same game */
   try { document.fonts.load('16px "KidsRock"'); document.fonts.load('700 16px "Fredoka"'); } catch (e) {}
   for (let i = 0; i < 6; i++) clouds.push({ x: rnd(0, W), y: rnd(8, 78), k: i % 2 });
   G.focus = document.hasFocus();
