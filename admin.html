@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>TFIF Game Dashboard</title>
+<style>
+:root{
+  --bg:#f3f5fa; --surface:#ffffff; --fg:#141a33; --muted:#5b6588; --line:#d9deec; --soft:#eef1f8;
+  --accent:#e8590c; --accent-fg:#ffffff; --good:#1c7c54; --bad:#c0362c; --bar:#3b6fd8; --bar2:#f2a33a;
+  --gold:#f5c542; --silver:#cfd6e3; --bronze:#c98552;
+  --font:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --bg:#0d1122; --surface:#161c34; --fg:#e8ecfa; --muted:#9aa5cb; --line:#2a3360; --soft:#1d2445; --accent:#ff7a3a; --accent-fg:#1a0d08; --bar:#6c9bff; --bar2:#ffb85c; --good:#4fd39a; --bad:#ff7a6e; color-scheme:dark; }
+}
+:root[data-theme="dark"]{ --bg:#0d1122; --surface:#161c34; --fg:#e8ecfa; --muted:#9aa5cb; --line:#2a3360; --soft:#1d2445; --accent:#ff7a3a; --accent-fg:#1a0d08; --bar:#6c9bff; --bar2:#ffb85c; --good:#4fd39a; --bad:#ff7a6e; color-scheme:dark; }
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font:15px/1.45 var(--font);padding:0 16px 48px}
+[hidden]{display:none!important}
+.wrap{max-width:1200px;margin:0 auto}
+header.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:18px 0 14px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;letter-spacing:.01em}
+.logo i{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:9px;background:var(--accent);color:var(--accent-fg);font-style:normal;font-weight:900;font-size:13px}
+.who{margin-left:auto;display:flex;align-items:center;gap:10px;color:var(--muted);font-size:14px}
+button,select,input{font:inherit;color:inherit}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 14px;cursor:pointer;font-weight:600}
+.btn:hover{border-color:var(--fg)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.btn:disabled{opacity:.55;cursor:default}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+nav.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:18px;overflow-x:auto}
+nav.tabs button{border:0;background:none;padding:10px 14px;font-weight:600;color:var(--muted);border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
+nav.tabs button[aria-selected=true]{color:var(--fg);border-bottom-color:var(--accent)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+.signin{max-width:420px;margin:12vh auto 0}
+.signin h1{font-size:22px;margin:0 0 6px}
+.signin p{color:var(--muted);margin:0 0 16px}
+label.f{display:flex;flex-direction:column;gap:5px;font-weight:600;font-size:14px;margin-bottom:12px}
+input.t,select.t{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:9px 11px;min-width:0}
+.msg{min-height:1.4em;margin:6px 0 10px;color:var(--muted);font-size:14px}
+.msg.bad{color:var(--bad);font-weight:600}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.kpi .l{font-size:13px;color:var(--muted);font-weight:600}
+.kpi .v{font-size:28px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.15;margin-top:2px}
+.kpi .s{font-size:13px;color:var(--muted)}
+.kpi .s b{color:var(--good)}
+h2{font-size:17px;margin:0 0 4px}
+.sub{color:var(--muted);font-size:14px;margin:0 0 12px}
+.chart{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;align-items:end;gap:3px;height:180px;padding-top:8px;border-bottom:1px solid var(--line)}
+.chart .c{display:flex;flex-direction:column;justify-content:flex-end;height:100%;position:relative;min-width:0}
+.chart .b{background:var(--bar);border-radius:3px 3px 0 0;min-height:1px}
+.chart .c:hover .b{filter:brightness(1.15)}
+.chart .tip{display:none;position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:var(--fg);color:var(--bg);font-size:12px;padding:5px 8px;border-radius:6px;white-space:nowrap;z-index:2}
+.chart .c:hover .tip{display:block}
+.axis{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;margin-top:6px}
+.two{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+.split{display:flex;flex-direction:column;gap:10px}
+.split .row{display:grid;grid-template-columns:110px 1fr 56px;gap:10px;align-items:center;font-size:14px}
+.split .track{height:12px;background:var(--soft);border-radius:6px;overflow:hidden}
+.split .fill{height:100%;background:var(--bar2);border-radius:6px}
+.split .n{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:12px}
+.bar .grow{flex:1;min-width:200px}
+.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface);max-height:70vh}
+table{border-collapse:separate;border-spacing:0;width:100%;font-size:14px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{position:sticky;top:0;background:var(--soft);font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);z-index:1;cursor:pointer;user-select:none}
+th[aria-sort]::after{content:" ▲";font-size:10px}
+th[aria-sort=descending]::after{content:" ▼"}
+td.n{text-align:right;font-variant-numeric:tabular-nums}
+th.n{text-align:right}
+tbody tr:hover{background:var(--soft)}
+tbody tr.click{cursor:pointer}
+tr.blocked td{opacity:.5;text-decoration:line-through}
+.tier{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:3px 7px;border-radius:5px;color:#1d1d1d}
+.t-Bronze{background:var(--bronze);color:#fff}.t-Silver{background:var(--silver)}.t-Gold{background:var(--gold)}.t-Platinum{background:#7fe3d6}.t-Diamond{background:linear-gradient(90deg,#9ad7ff,#d6a8ff)}
+.medal{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;font-weight:800;font-size:13px;background:var(--soft)}
+.m1{background:var(--gold)}.m2{background:var(--silver)}.m3{background:var(--bronze);color:#fff}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+.drawer{position:fixed;inset:0 0 0 auto;width:min(560px,100%);background:var(--surface);border-left:1px solid var(--line);box-shadow:-10px 0 40px rgba(0,0,0,.2);padding:20px;overflow:auto;z-index:10}
+.drawer h3{margin:0 0 2px;font-size:20px}
+.drawer .meta{color:var(--muted);font-size:14px;margin-bottom:14px}
+.drawer dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0 0 16px;font-size:14px}
+.drawer dt{color:var(--muted)}
+.drawer dd{margin:0;font-weight:600}
+.shade{position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:9}
+.help ol{padding-left:20px;margin:8px 0}
+.help li{margin-bottom:8px}
+code{font-family:var(--mono);font-size:13px;background:var(--soft);padding:2px 6px;border-radius:5px}
+pre{font-family:var(--mono);font-size:13px;background:var(--soft);padding:12px;border-radius:8px;overflow:auto}
+/* two views: the client sees the reports; the operator also runs the game */
+body:not(.op) .op-only{display:none!important}
+body.op .client-only{display:none!important}
+.role{display:inline-block;font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:4px 9px;border-radius:999px;background:var(--soft);color:var(--muted);border:1px solid var(--line)}
+.role.is-op{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.preview-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:#fff4d6;color:#5a3d00;border:1px solid #f1d58a;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-weight:600}
+.btn.danger{background:var(--bad);border-color:var(--bad);color:#fff}
+.btn.danger.ghost{background:none;color:var(--bad)}
+.danger-box{margin-top:14px;border:1px solid var(--bad);border-radius:10px;padding:12px 14px}
+.danger-box p{margin:0 0 8px;font-size:14px}
+.chal-card{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-bottom:16px}
+.chal-card .card{flex:1;min-width:260px}
+.state{display:inline-block;font-size:12px;font-weight:800;padding:3px 8px;border-radius:6px;background:var(--soft);color:var(--muted)}
+.state.on{background:var(--good);color:#fff}
+.banner-prev{width:260px;max-width:100%;border:3px solid #fff;border-radius:14px;background:linear-gradient(170deg,#ffb21e,#ff7a12);box-shadow:0 4px 0 #9a3f00,0 8px 22px rgba(0,0,0,.25);padding:11px 14px 12px;color:#3b1d00;font:500 14px/1.2 system-ui,sans-serif}
+.banner-prev .k{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#fff}
+.banner-prev .t{font-size:20px;font-weight:900;color:#fff;margin:3px 0;text-shadow:0 1px 0 #a34500}
+.banner-prev .p{font-weight:700}
+.banner-prev .e{font-size:12px;opacity:.9;margin-top:3px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:0 14px}
+.f small{font-weight:400;color:var(--muted)}
+.read dl{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;margin:8px 0 0;font-size:14px}
+.read dt{color:var(--muted)} .read dd{margin:0;font-weight:600}
+@media (max-width:820px){ .two{grid-template-columns:1fr} .who span{display:none} .grid2,.grid3{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="logo"><i>TFIF</i> Game dashboard</div>
+    <div class="who" id="who" hidden><b class="role" id="who-role"></b><span id="who-email"></span><button class="btn" id="btn-out" type="button">Sign out</button></div>
+  </header>
+
+  <!-- sign in -->
+  <section class="card signin" id="signin" hidden>
+    <h1>Sign in</h1>
+    <p id="signin-sub">Type your email address and we'll send you a 4-digit code. Only emails that have been given access can see the data.</p>
+    <form id="f-email">
+      <label class="f">Email<input class="t" id="in-email" type="email" autocomplete="email" required></label>
+      <div class="msg" id="msg-email" role="status"></div>
+      <button class="btn primary" type="submit">Send code</button>
+    </form>
+    <form id="f-code" hidden>
+      <label class="f">Code from the email<input class="t" id="in-code" inputmode="numeric" autocomplete="one-time-code" maxlength="4" placeholder="1234" required></label>
+      <div class="msg" id="msg-code" role="status"></div>
+      <button class="btn primary" type="submit">Sign in</button>
+      <button class="btn" type="button" id="btn-back">Use another email</button>
+    </form>
+  </section>
+
+  <section class="card signin" id="setup" hidden>
+    <h1>Not connected yet</h1>
+    <p>This page needs the game's Supabase project address and key. They are filled in when the game is connected.</p>
+  </section>
+
+  <!-- dashboard -->
+  <main id="app" hidden>
+    <div class="preview-bar" id="preview-bar" hidden>You're seeing the dashboard as the client sees it. <button class="btn" type="button" id="btn-unpreview">Back to the operator view</button></div>
+    <nav class="tabs" role="tablist">
+      <button role="tab" aria-selected="true" data-tab="overview" type="button">Overview</button>
+      <button role="tab" aria-selected="false" data-tab="players" type="button">Players</button>
+      <button role="tab" aria-selected="false" data-tab="ranks" type="button">Rankings and winners</button>
+      <button role="tab" aria-selected="false" data-tab="challenge" type="button">Challenge</button>
+      <button role="tab" aria-selected="false" data-tab="access" type="button" class="op-only">Access</button>
+      <button role="tab" aria-selected="false" data-tab="help" type="button">Help</button>
+    </nav>
+
+    <section data-panel="overview">
+      <div id="ov-chal"></div>
+      <div class="kpis" id="kpis"></div>
+      <div class="two">
+        <div class="card">
+          <h2>Plays per day</h2>
+          <p class="sub" id="chart-sub">Last 30 days. Hover a bar for the day's numbers.</p>
+          <div class="chart" id="chart"></div>
+          <div class="axis" id="axis"></div>
+        </div>
+        <div class="card">
+          <h2>Where people play</h2>
+          <p class="sub">Play sessions this week</p>
+          <div class="split" id="via"></div>
+        </div>
+      </div>
+    </section>
+
+    <section data-panel="players" hidden>
+      <div class="bar">
+        <label class="f grow" style="margin:0">Search<input class="t" id="q" type="search" placeholder="Name, email, phone or company"></label>
+        <button class="btn" id="dl-players" type="button">Download spreadsheet (CSV)</button>
+      </div>
+      <p class="sub" id="players-sub"></p>
+      <div class="tablewrap"><table id="t-players"></table></div>
+    </section>
+
+    <section data-panel="ranks" hidden>
+      <div class="bar">
+        <label class="f" style="margin:0">Game<select class="t" id="r-mode"><option value="runner">Runner</option><option value="flyer">Flyer</option></select></label>
+        <label class="f" style="margin:0">Period<select class="t" id="r-period">
+          <option value="week">This week (so far)</option><option value="lastweek" selected>Last week (finished)</option>
+          <option value="month">This month (so far)</option><option value="lastmonth">Last month (finished)</option><option value="all">All time</option></select></label>
+        <label class="f" style="margin:0">Ranked by<select class="t" id="r-metric">
+          <option value="points">Points</option><option value="stars">Stars collected</option><option value="stage">Furthest stage cleared</option><option value="time">Time played (minutes)</option></select></label>
+        <button class="btn" id="dl-ranks" type="button">Download spreadsheet (CSV)</button>
+      </div>
+      <p class="sub">Weeks run Monday to Sunday, South African time. Players taken out of the rankings are not shown.</p>
+      <div class="tablewrap"><table id="t-ranks"></table></div>
+    </section>
+
+    <section data-panel="challenge" hidden>
+      <div class="chal-card">
+        <div class="card">
+          <h2>This week's challenge <span class="state" id="ch-state"></span></h2>
+          <p class="sub">Shown to players on the game's opening screen and at the top of the rankings. Tapping it opens the matching board.</p>
+          <form id="f-chal" class="op-only">
+            <label class="f">Headline <small>(up to 60 characters)</small><input class="t" id="ch-title" maxlength="60" placeholder="e.g. Most stars in the Flyer game"></label>
+            <label class="f">One extra line <small>(optional)</small><input class="t" id="ch-detail" maxlength="120" placeholder="e.g. Collect as many stars as you can before Sunday"></label>
+            <label class="f">Prize <small>(optional)</small><input class="t" id="ch-prize" maxlength="80" placeholder="e.g. R500 Takealot voucher"></label>
+            <div class="grid3">
+              <label class="f">Game<select class="t" id="ch-mode"><option value="both">Both games</option><option value="runner">Runner</option><option value="flyer">Flyer</option></select></label>
+              <label class="f">Won by<select class="t" id="ch-metric"><option value="points">Most points</option><option value="stars">Most stars</option><option value="stage">Furthest stage</option><option value="time">Most time played</option></select></label>
+              <label class="f">Runs for<select class="t" id="ch-period"><option value="week">A week (Mon to Sun)</option><option value="month">A month</option></select></label>
+            </div>
+            <div class="grid2">
+              <label class="f">Starts showing <small>(empty: straight away)</small><input class="t" id="ch-starts" type="datetime-local"></label>
+              <label class="f">Stops showing <small>(empty: end of the week or month)</small><input class="t" id="ch-ends" type="datetime-local"></label>
+            </div>
+            <div class="msg" id="msg-chal" role="status"></div>
+            <button class="btn primary" type="submit">Save the challenge</button>
+            <button class="btn" type="button" id="ch-off">Take it off the game</button>
+          </form>
+          <div class="read client-only" id="ch-read"></div>
+        </div>
+        <div>
+          <p class="sub" style="font-weight:600">How it looks in the game</p>
+          <div class="banner-prev" id="ch-prev"></div>
+        </div>
+      </div>
+    </section>
+
+    <section data-panel="access" hidden class="op-only">
+      <div class="card">
+        <h2>Who can open this dashboard</h2>
+        <p class="sub"><b>Client</b>: sees the reports, players, winners and downloads, and can't change anything. <b>Operator</b>: also sets the challenge, takes players out of the rankings, deletes players and gives access.</p>
+        <form id="f-access" class="bar">
+          <label class="f grow" style="margin:0">Email<input class="t" id="ac-email" type="email" placeholder="name@company.co.za" required></label>
+          <label class="f" style="margin:0">Role<select class="t" id="ac-role"><option value="client">Client (read-only)</option><option value="operator">Operator</option></select></label>
+          <button class="btn primary" type="submit">Give access</button>
+        </form>
+        <div class="msg" id="msg-access" role="status"></div>
+        <div class="tablewrap"><table id="t-access"></table></div>
+        <p class="sub" style="margin-top:10px">They sign in on this page with a code sent to that email. You can't change your own access here.</p>
+      </div>
+    </section>
+
+    <section data-panel="help" hidden>
+      <div class="card help">
+        <h2>How the competition is scored</h2>
+        <ol>
+          <li><b>Points</b>: a finished stage scores stage number × 100, plus 10 per star, plus a speed bonus of up to 100 for finishing fast. An unfinished stage scores 10 per star.</li>
+          <li><b>Stars</b>: all stars collected in the period.</li>
+          <li><b>Furthest stage</b>: the highest stage cleared.</li>
+          <li><b>Time played</b>: minutes spent playing stages.</li>
+          <li><b>Tiers</b> (all-time points per game): Bronze, Silver from 1,500, Gold from 5,000, Platinum from 12,000, Diamond from 25,000.</li>
+        </ol>
+        <h2 style="margin-top:18px">Finding the winners</h2>
+        <ol>
+          <li>Open <b>Rankings and winners</b>, choose the game, <b>Last week</b> or <b>Last month</b>, and what the challenge was won by. The top of the list is the winner, with their contact details.</li>
+          <li><b>Download spreadsheet</b> saves the list to open in Excel.</li>
+        </ol>
+        <h2 style="margin-top:18px">Fair play</h2>
+        <ol>
+          <li>Every winner's plays are checked before they are announced. Stage times that are all very short, or a huge number of plays in a few minutes, can mean cheating.</li>
+          <li class="op-only">To take a player out of the rankings, click their row in <b>Players</b> and choose <b>Take out of rankings</b>. You can put them back the same way.</li>
+          <li class="op-only">To remove a player for good (for example when they ask for their details to be deleted), click their row and choose <b>Delete player</b>. This can't be undone.</li>
+          <li class="client-only">If a player asks for their details to be deleted, or you spot something odd, let the operator know and it will be handled.</li>
+        </ol>
+        <h2 style="margin-top:18px">Access</h2>
+        <ol>
+          <li class="client-only">To give a colleague access to this dashboard, ask the operator.</li>
+          <li class="op-only">Add or remove people in the <b>Access</b> tab. Give the client's people the <b>Client</b> role.</li>
+        </ol>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="shade" id="shade" hidden></div>
+<aside class="drawer" id="drawer" hidden aria-label="Player details"></aside>
+
+<script>
+(() => {
+const CFG = { url: 'https://qznemlqxwsrcritqhnof.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF6bmVtbHF4d3NyY3JpdHFobm9mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ0ODQxMjksImV4cCI6MjExMDA2MDEyOX0.1S5-8MFHL1OLxbqzAhQIqf5SJq8XQSujSpmXx7DduKk' };   /* filled in when the game is connected (both are public values) */
+const $ = id => document.getElementById(id);
+const base = CFG.url.replace(/\/+$/, ''), AKEY = 'tfif-admin-auth';
+const legacy = CFG.key.indexOf('eyJ') === 0;
+let sess = null; try { sess = JSON.parse(localStorage.getItem(AKEY) || 'null'); } catch (e) {}
+const saveSess = s => { sess = s; try { s ? localStorage.setItem(AKEY, JSON.stringify(s)) : localStorage.removeItem(AKEY); } catch (e) {} };
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const num = n => n == null ? '' : Number(n).toLocaleString('en-ZA', { maximumFractionDigits: 1 });
+const when = d => d ? new Date(d).toLocaleString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+const day = d => d ? new Date(d).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+
+async function req(path, body, auth) {
+  const h = { 'Content-Type': 'application/json', apikey: CFG.key };
+  if (auth && sess) h.Authorization = 'Bearer ' + sess.access_token; else if (legacy) h.Authorization = 'Bearer ' + CFG.key;
+  let r; try { r = await fetch(base + path, { method: 'POST', headers: h, body: JSON.stringify(body || {}) }); }
+  catch (e) { throw new Error('No internet connection.'); }
+  const t = await r.text(); let j = null; try { j = t ? JSON.parse(t) : null; } catch (e) {}
+  if (!r.ok) { const e = new Error((j && (j.message || j.msg || j.error_description || j.error)) || 'HTTP ' + r.status); e.status = r.status; throw e; }
+  return j;
+}
+const keep = s => saveSess({ access_token: s.access_token, refresh_token: s.refresh_token, expires_at: s.expires_at || Math.floor(Date.now() / 1000) + (s.expires_in || 3600), email: (s.user && s.user.email) || (sess && sess.email) });
+async function rpc(fn, args) {
+  if (sess && Date.now() / 1000 > sess.expires_at - 90) {
+    try { keep(await req('/auth/v1/token?grant_type=refresh_token', { refresh_token: sess.refresh_token })); }
+    catch (e) { saveSess(null); showSignin(); throw new Error('Please sign in again.'); }
+  }
+  return req('/rest/v1/rpc/' + fn, args || {}, true);
+}
+
+/* ---------- sign in ---------- */
+function showSignin() { $('app').hidden = true; $('who').hidden = true; $('signin').hidden = false; $('f-email').hidden = false; $('f-code').hidden = true; }
+let email = '';
+$('f-email').addEventListener('submit', async e => {
+  e.preventDefault(); email = $('in-email').value.trim().toLowerCase();
+  const m = $('msg-email'); m.className = 'msg'; m.textContent = 'Sending…';
+  try { await req('/functions/v1/send-code', { email }); $('f-email').hidden = true; $('f-code').hidden = false; $('msg-code').textContent = 'Code sent to ' + email + '.'; $('in-code').focus(); }
+  catch (err) { m.className = 'msg bad'; m.textContent = /WAIT|TOO_MANY/.test(err.message) ? 'Please wait a minute before asking for another code.' : /BAD_EMAIL/.test(err.message) ? 'Please check the email address.' : /EMAIL/.test(err.message) ? 'The code email could not be sent. Please try again shortly.' : err.message; }
+});
+$('f-code').addEventListener('submit', async e => {
+  e.preventDefault(); const m = $('msg-code'); m.className = 'msg'; m.textContent = 'Checking…';
+  try {
+    keep(await req('/functions/v1/verify-code', { email, code: $('in-code').value.replace(/\D/g, '') }));
+    const role = await rpc('admin_role');
+    if (!role) { saveSess(null); m.className = 'msg bad'; m.textContent = 'This email hasn\'t been given access yet. Ask the game\'s operator to add it.'; return; }
+    start(role);
+  } catch (err) { m.className = 'msg bad'; m.textContent = /TOO_MANY_TRIES/.test(err.message) ? 'Too many wrong tries. Go back and ask for a new code.' : /WRONG_CODE|EXPIRED/.test(err.message) ? 'That code is wrong or has expired.' : err.message; }
+});
+$('btn-back').addEventListener('click', showSignin);
+$('btn-out').addEventListener('click', () => { saveSess(null); showSignin(); });
+
+/* ---------- tabs ---------- */
+let loaded = {};
+document.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('[data-tab]').forEach(x => x.setAttribute('aria-selected', String(x === b)));
+  document.querySelectorAll('[data-panel]').forEach(p => { p.hidden = p.dataset.panel !== b.dataset.tab; });
+  if (b.dataset.tab === 'players' && !loaded.players) loadPlayers();
+  if (b.dataset.tab === 'ranks' && !loaded.ranks) loadRanks();
+  if (b.dataset.tab === 'challenge') loadChallenge();
+  if (b.dataset.tab === 'access') loadAccess();
+}));
+const tabTo = t => document.querySelector(`[data-tab="${t}"]`).click();
+
+let ROLE = 'client';
+const isOp = () => document.body.classList.contains('op');
+function setView(op) {
+  document.body.classList.toggle('op', op);
+  $('preview-bar').hidden = op || ROLE !== 'operator';
+  $('who-role').textContent = op ? 'Operator' : 'Client view'; $('who-role').classList.toggle('is-op', op);
+  const sel = document.querySelector('[data-tab][aria-selected=true]');
+  if (sel && sel.classList.contains('op-only') && !op) tabTo('overview');
+  if (!$('drawer').hidden) closeDrawer();
+}
+async function start(role) {
+  ROLE = role || ROLE;
+  $('signin').hidden = true; $('app').hidden = false; $('who').hidden = false; $('who-email').textContent = sess.email || '';
+  setView(ROLE === 'operator');
+  loaded = {}; loadOverview();
+}
+$('btn-unpreview').addEventListener('click', () => setView(true));
+
+/* ---------- overview ---------- */
+async function loadOverview() {
+  try {
+    const [s, d, ch] = await Promise.all([rpc('admin_summary'), rpc('admin_daily', { p_days: 30 }), rpc('admin_get_challenge').catch(() => null)]);
+    challenge = ch;
+    $('ov-chal').innerHTML = `<div class="card bar" style="align-items:center;margin-bottom:16px">
+        <div class="grow"><h2>${ch && ch.live ? 'Challenge running: ' + esc(ch.title) : 'No challenge running in the game right now'}</h2>
+        <p class="sub" style="margin:0">${ch && ch.live ? esc(chalLine(ch)) : 'Players still see the normal weekly and monthly rankings.'}</p></div>
+        <button class="btn" type="button" data-go="challenge">Open the challenge</button>
+        <button class="btn op-only" type="button" id="btn-preview">See the client view</button></div>`;
+    $('ov-chal').querySelector('[data-go]').addEventListener('click', () => tabTo('challenge'));
+    const pv = $('btn-preview'); if (pv) pv.addEventListener('click', () => setView(false));
+    const k = (l, v, sub) => `<div class="kpi"><div class="l">${l}</div><div class="v">${v}</div><div class="s">${sub || ''}</div></div>`;
+    $('kpis').innerHTML =
+      k('Players signed up', num(s.players), `<b>+${num(s.new_week)}</b> this week · +${num(s.new_month)} this month`) +
+      k('Active this week', num(s.active_week), `${num(s.active_month)} this month`) +
+      k('Stages played this week', num(s.plays_week), `${num(s.plays_total)} all time`) +
+      k('Minutes played this week', num(s.minutes_week), `${num(s.minutes_total)} all time`) +
+      k('Opted in to news', num(s.marketing_ok), s.players ? Math.round(100 * s.marketing_ok / s.players) + '% of players' : '');
+    const max = Math.max(1, ...d.map(r => r.plays));
+    $('chart').innerHTML = d.map(r => `<div class="c"><div class="tip">${day(r.day)}: ${num(r.plays)} plays · ${num(r.players)} players · ${num(r.signups)} new · ${num(r.minutes)} min</div><div class="b" style="height:${(100 * r.plays / max).toFixed(1)}%"></div></div>`).join('');
+    $('axis').innerHTML = d.length ? `<span>${day(d[0].day)}</span><span>${day(d[d.length - 1].day)}</span>` : '';
+    const names = { web: 'Game website', app: 'Home-screen app', embed: 'Client website' };
+    const via = s.via_week || {}, tot = Object.values(via).reduce((a, b) => a + b, 0);
+    $('via').innerHTML = tot ? Object.entries(via).sort((a, b) => b[1] - a[1]).map(([kk, v]) =>
+      `<div class="row"><span>${esc(names[kk] || kk)}</span><div class="track"><div class="fill" style="width:${(100 * v / tot).toFixed(1)}%"></div></div><span class="n">${num(v)}</span></div>`).join('')
+      : '<p class="sub">No play sessions yet this week.</p>';
+  } catch (e) { $('kpis').innerHTML = `<div class="kpi"><div class="l">Couldn't load</div><div class="s">${esc(e.message)}</div></div>`; }
+}
+
+/* ---------- tables ---------- */
+function table(el, cols, rows, onRow, sortState) {
+  const st = sortState || { k: null, d: 1 };
+  const render = () => {
+    let rs = rows.slice();
+    if (st.k) { const c = cols.find(c => c.k === st.k); rs.sort((a, b) => { const x = a[st.k], y = b[st.k]; return (x == null) - (y == null) || (c.num ? (x - y) : String(x).localeCompare(String(y))) * st.d; }); }
+    el.innerHTML = `<thead><tr>${cols.map(c => `<th class="${c.num ? 'n' : ''}" data-k="${c.k}" ${st.k === c.k ? `aria-sort="${st.d > 0 ? 'ascending' : 'descending'}"` : ''}>${c.t}</th>`).join('')}</tr></thead>` +
+      `<tbody>${rs.length ? rs.map((r, i) => `<tr data-i="${rows.indexOf(r)}" class="${onRow ? 'click' : ''} ${r.blocked ? 'blocked' : ''}">${cols.map(c => `<td class="${c.num ? 'n' : ''}">${c.f ? c.f(r[c.k], r) : esc(r[c.k])}</td>`).join('')}</tr>`).join('')
+        : `<tr><td colspan="${cols.length}" class="empty">Nothing here yet.</td></tr>`}</tbody>`;
+    el.querySelectorAll('th').forEach(th => th.addEventListener('click', () => { const k = th.dataset.k; st.d = st.k === k ? -st.d : (cols.find(c => c.k === k).num ? -1 : 1); st.k = k; render(); }));
+    if (onRow) el.querySelectorAll('tbody tr[data-i]').forEach(tr => tr.addEventListener('click', () => onRow(rows[+tr.dataset.i])));
+  };
+  render();
+}
+function csv(name, cols, rows) {
+  const q = v => { const s = v == null ? '' : String(v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+  const text = '﻿' + [cols.map(c => q(c.t)).join(','), ...rows.map(r => cols.map(c => q(c.x ? c.x(r[c.k], r) : r[c.k])).join(','))].join('\r\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'text/csv;charset=utf-8' }));
+  a.download = name + '.csv'; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+const tierCell = v => v ? `<span class="tier t-${esc(v)}">${esc(v)}</span>` : '';
+const viaName = v => v === 'app' ? 'Home-screen app' : v === 'web' ? 'Game website' : v && v.indexOf('embed:') === 0 ? 'Client site (' + v.slice(6) + ')' : (v || '');
+
+/* ---------- players ---------- */
+let players = [];
+const PCOLS = [
+  { k: 'nickname', t: 'Player name' }, { k: 'email', t: 'Email' }, { k: 'phone', t: 'Mobile' }, { k: 'company', t: 'Company' },
+  { k: 'joined', t: 'Joined', f: day, x: v => v ? new Date(v).toISOString().slice(0, 10) : '' },
+  { k: 'last_seen', t: 'Last seen', f: when, x: v => v ? new Date(v).toISOString().replace('T', ' ').slice(0, 16) : '' },
+  { k: 'visits', t: 'Sessions', num: 1, f: num }, { k: 'plays', t: 'Stages played', num: 1, f: num }, { k: 'minutes', t: 'Minutes', num: 1, f: num },
+  { k: 'runner_best', t: 'Runner best', num: 1, f: num }, { k: 'flyer_best', t: 'Flyer best', num: 1, f: num },
+  { k: 'stars', t: 'Stars', num: 1, f: num }, { k: 'points', t: 'Points', num: 1, f: num }, { k: 'tier', t: 'Tier', f: tierCell },
+  { k: 'marketing_ok', t: 'News opt-in', f: v => v ? 'Yes' : 'No', x: v => v ? 'Yes' : 'No' }, { k: 'source', t: 'Came from' },
+  { k: 'blocked', t: 'In rankings', f: v => v ? 'Taken out' : 'Yes', x: v => v ? 'Taken out' : 'Yes' }];
+const psort = { k: 'joined', d: -1 };
+async function loadPlayers() {
+  $('t-players').innerHTML = '<tbody><tr><td class="empty">Loading…</td></tr></tbody>';
+  try { players = await rpc('admin_players'); loaded.players = true; showPlayers(); }
+  catch (e) { $('t-players').innerHTML = `<tbody><tr><td class="empty">${esc(e.message)}</td></tr></tbody>`; }
+}
+function showPlayers() {
+  const q = $('q').value.trim().toLowerCase();
+  const rows = q ? players.filter(p => [p.nickname, p.email, p.phone, p.company].some(v => (v || '').toLowerCase().includes(q))) : players;
+  $('players-sub').textContent = `${num(rows.length)} of ${num(players.length)} players. Click a row to see their plays.`;
+  table($('t-players'), PCOLS, rows, openPlayer, psort);
+}
+$('q').addEventListener('input', showPlayers);
+$('dl-players').addEventListener('click', () => csv('tfif-players-' + new Date().toISOString().slice(0, 10), PCOLS, players));
+
+async function openPlayer(p) {
+  const dr = $('drawer'); $('shade').hidden = false; dr.hidden = false;
+  dr.innerHTML = `<button class="btn" type="button" id="dr-close" style="float:right">Close</button>
+    <h3>${esc(p.nickname)}</h3><div class="meta">${tierCell(p.tier)} · joined ${day(p.joined)}</div>
+    <dl><dt>Email</dt><dd>${esc(p.email)}</dd><dt>Mobile</dt><dd>${esc(p.phone)}</dd><dt>Company</dt><dd>${esc(p.company)}</dd>
+    <dt>News opt-in</dt><dd>${p.marketing_ok ? 'Yes' : 'No'}</dd><dt>Came from</dt><dd>${esc(p.source || '–')}</dd>
+    <dt>Totals</dt><dd>${num(p.plays)} stages · ${num(p.minutes)} min · ${num(p.stars)} stars · ${num(p.points)} pts</dd></dl>
+    <div class="op-only">
+      <button class="btn" type="button" id="dr-block">${p.blocked ? 'Put back in the rankings' : 'Take out of rankings'}</button>
+      <button class="btn danger ghost" type="button" id="dr-del">Delete player…</button>
+      <div class="danger-box" id="dr-delbox" hidden>
+        <p><b>Delete ${esc(p.nickname)} for good?</b> This removes their details, every stage they played and their sign-in. It can't be undone. Their name disappears from all rankings, including past winners lists.</p>
+        <label class="f">Type DELETE to confirm<input class="t" id="dr-delword" autocomplete="off"></label>
+        <button class="btn danger" type="button" id="dr-delgo" disabled>Delete player</button>
+        <button class="btn" type="button" id="dr-delno">Keep them</button>
+        <div class="msg" id="msg-del" role="status"></div>
+      </div>
+    </div>
+    <h2 style="margin:18px 0 8px">Recent plays</h2><div class="tablewrap" style="max-height:none"><table id="t-plays"><tbody><tr><td class="empty">Loading…</td></tr></tbody></table></div>`;
+  $('dr-close').addEventListener('click', closeDrawer);
+  $('dr-block').addEventListener('click', async () => {
+    const b = $('dr-block'); b.disabled = true;
+    try { await rpc('admin_set_blocked', { p_player: p.id, p_blocked: !p.blocked }); p.blocked = !p.blocked; b.textContent = p.blocked ? 'Put back in the rankings' : 'Take out of rankings'; showPlayers(); loaded.ranks = false; }
+    catch (e) { b.textContent = e.message; } finally { b.disabled = false; }
+  });
+  $('dr-del').addEventListener('click', () => { $('dr-delbox').hidden = false; $('dr-del').hidden = true; $('dr-delword').focus(); });
+  $('dr-delno').addEventListener('click', () => { $('dr-delbox').hidden = true; $('dr-del').hidden = false; $('dr-delword').value = ''; $('dr-delgo').disabled = true; });
+  $('dr-delword').addEventListener('input', e => { $('dr-delgo').disabled = e.target.value.trim().toUpperCase() !== 'DELETE'; });
+  $('dr-delgo').addEventListener('click', async () => {
+    const b = $('dr-delgo'), m = $('msg-del'); b.disabled = true; m.className = 'msg'; m.textContent = 'Deleting…';
+    try {
+      await rpc('admin_delete_player', { p_player: p.id });
+      players = players.filter(x => x.id !== p.id); showPlayers(); loaded.ranks = false; closeDrawer();
+      $('players-sub').textContent = `${p.nickname} was deleted. ` + $('players-sub').textContent;
+    } catch (e) { m.className = 'msg bad'; m.textContent = e.message; b.disabled = false; }
+  });
+  try {
+    const plays = await rpc('admin_player_plays', { p_player: p.id });
+    table($('t-plays'), [
+      { k: 'played_at', t: 'When', f: when }, { k: 'mode', t: 'Game' }, { k: 'stage', t: 'Stage', num: 1 },
+      { k: 'cleared', t: 'Finished', f: v => v ? 'Yes' : 'No' }, { k: 'stars', t: 'Stars', num: 1 }, { k: 'seconds', t: 'Seconds', num: 1, f: num },
+      { k: 'speed_bonus', t: 'Speed bonus', num: 1 }, { k: 'points', t: 'Points', num: 1, f: num }, { k: 'hero', t: 'Character' }, { k: 'via', t: 'Played on', f: viaName }], plays);
+  } catch (e) { $('t-plays').innerHTML = `<tbody><tr><td class="empty">${esc(e.message)}</td></tr></tbody>`; }
+}
+function closeDrawer() { $('drawer').hidden = true; $('shade').hidden = true; }
+$('shade').addEventListener('click', closeDrawer);
+addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+
+/* ---------- rankings ---------- */
+let ranks = [];
+const metricName = () => $('r-metric').selectedOptions[0].textContent;
+const RCOLS = () => [
+  { k: 'rank', t: 'Rank', num: 1, f: v => `<span class="medal ${v <= 3 ? 'm' + v : ''}">${v}</span>`, x: v => v },
+  { k: 'nickname', t: 'Player name' }, { k: 'value', t: metricName(), num: 1, f: num }, { k: 'tier', t: 'Tier', f: tierCell },
+  { k: 'plays', t: 'Stages played', num: 1, f: num }, { k: 'email', t: 'Email' }, { k: 'phone', t: 'Mobile' }, { k: 'company', t: 'Company' }];
+async function loadRanks() {
+  $('t-ranks').innerHTML = '<tbody><tr><td class="empty">Loading…</td></tr></tbody>';
+  try {
+    ranks = await rpc('admin_leaderboard', { p_mode: $('r-mode').value, p_period: $('r-period').value, p_metric: $('r-metric').value, p_limit: 500 });
+    loaded.ranks = true; table($('t-ranks'), RCOLS(), ranks);
+  } catch (e) { $('t-ranks').innerHTML = `<tbody><tr><td class="empty">${esc(e.message)}</td></tr></tbody>`; }
+}
+['r-mode', 'r-period', 'r-metric'].forEach(id => $(id).addEventListener('change', loadRanks));
+$('dl-ranks').addEventListener('click', () => csv(['tfif', $('r-mode').value, $('r-period').value, $('r-metric').value, new Date().toISOString().slice(0, 10)].join('-'), RCOLS(), ranks));
+
+/* ---------- the challenge ---------- */
+let challenge = null;
+const MODE_T = { both: 'Both games', runner: 'Runner', flyer: 'Flyer' };
+const METRIC_T = { points: 'Most points', stars: 'Most stars', stage: 'Furthest stage', time: 'Most time played' };
+const endTxt = d => d ? new Date(new Date(d).getTime() - 1000).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Africa/Johannesburg' }) : '';
+const chalLine = c => [MODE_T[c.mode], METRIC_T[c.metric], c.prize ? 'Prize: ' + c.prize : '', c.shows_until ? 'Ends ' + endTxt(c.shows_until) : ''].filter(Boolean).join(' · ');
+const toLocal = d => { if (!d) return ''; const x = new Date(d); return new Date(x.getTime() - x.getTimezoneOffset() * 60000).toISOString().slice(0, 16); };
+const fromLocal = v => v ? new Date(v).toISOString() : null;
+function preview() {
+  const c = isOp() ? { title: $('ch-title').value.trim(), prize: $('ch-prize').value.trim(), period: $('ch-period').value,
+                       end: $('ch-ends').value ? new Date($('ch-ends').value) : null } : (challenge || {});
+  const end = c.end || (challenge && challenge.shows_until && !isOp() ? challenge.shows_until : null);
+  $('ch-prev').innerHTML = c.title
+    ? `<div class="k">★ This ${c.period === 'month' ? 'month' : 'week'}'s challenge</div><div class="t">${esc(c.title)}</div>${c.prize ? `<div class="p">Prize: ${esc(c.prize)}</div>` : ''}<div class="e">${end ? 'Ends ' + endTxt(end) + ' · ' : ''}<u>See the board</u></div>`
+    : '<div class="k">No challenge</div><div class="e">Nothing shows in the game.</div>';
+}
+async function loadChallenge() {
+  try { challenge = await rpc('admin_get_challenge'); } catch (e) { $('msg-chal').textContent = e.message; }
+  const c = challenge || {};
+  $('ch-state').textContent = c.live ? 'Showing in the game' : c.title ? 'Not showing now' : 'None set'; $('ch-state').classList.toggle('on', !!c.live);
+  $('ch-title').value = c.title || ''; $('ch-detail').value = c.detail || ''; $('ch-prize').value = c.prize || '';
+  $('ch-mode').value = c.mode || 'both'; $('ch-metric').value = c.metric || 'points'; $('ch-period').value = c.period || 'week';
+  $('ch-starts').value = toLocal(c.starts_at); $('ch-ends').value = toLocal(c.ends_at);
+  $('ch-read').innerHTML = c.title ? `<dl><dt>Headline</dt><dd>${esc(c.title)}</dd>${c.detail ? `<dt>Extra line</dt><dd>${esc(c.detail)}</dd>` : ''}
+      <dt>Prize</dt><dd>${esc(c.prize || '–')}</dd><dt>Game</dt><dd>${MODE_T[c.mode]}</dd><dt>Won by</dt><dd>${METRIC_T[c.metric]}</dd>
+      <dt>Showing</dt><dd>${c.live ? 'Yes, until ' + endTxt(c.shows_until) : 'No'}</dd></dl>`
+    : '<p class="sub">No challenge has been set yet. The operator sets it up.</p>';
+  preview();
+}
+['ch-title', 'ch-prize', 'ch-period', 'ch-ends'].forEach(id => $(id).addEventListener('input', preview));
+async function saveChallenge(off) {
+  const m = $('msg-chal'); m.className = 'msg'; m.textContent = 'Saving…';
+  if (!off && !$('ch-title').value.trim()) { m.className = 'msg bad'; m.textContent = 'Give the challenge a headline.'; return; }
+  try {
+    await rpc('admin_set_challenge', off ? { p_title: '' } : {
+      p_title: $('ch-title').value.trim(), p_detail: $('ch-detail').value.trim(), p_prize: $('ch-prize').value.trim(),
+      p_mode: $('ch-mode').value, p_metric: $('ch-metric').value, p_period: $('ch-period').value,
+      p_starts: fromLocal($('ch-starts').value), p_ends: fromLocal($('ch-ends').value) });
+    await loadChallenge(); loadOverview();
+    m.textContent = off ? 'Taken off. Players no longer see a challenge.' : challenge && challenge.live ? 'Saved. Players see it the next time they open the game.' : 'Saved. It will show from the start time you set.';
+  } catch (e) { m.className = 'msg bad'; m.textContent = e.message; }
+}
+$('f-chal').addEventListener('submit', e => { e.preventDefault(); saveChallenge(false); });
+$('ch-off').addEventListener('click', () => saveChallenge(true));
+
+/* ---------- access (operator only) ---------- */
+async function loadAccess() {
+  try {
+    const rows = await rpc('admin_access_list');
+    const me = (sess.email || '').toLowerCase();
+    $('t-access').innerHTML = `<thead><tr><th>Email</th><th>Role</th><th>Added</th><th></th></tr></thead><tbody>${rows.map(r => r.email.toLowerCase() === me
+      ? `<tr><td>${esc(r.email)} <span class="sub">(you)</span></td><td>${r.role === 'operator' ? 'Operator' : 'Client'}</td><td>${day(r.added_at)}</td><td></td></tr>`
+      : `<tr><td>${esc(r.email)}</td><td><select class="t" data-role="${esc(r.email)}"><option value="client"${r.role === 'client' ? ' selected' : ''}>Client (read-only)</option><option value="operator"${r.role === 'operator' ? ' selected' : ''}>Operator</option></select></td><td>${day(r.added_at)}</td><td><button class="btn danger ghost" type="button" data-rm="${esc(r.email)}">Remove</button></td></tr>`).join('')}</tbody>`;
+    $('t-access').querySelectorAll('[data-role]').forEach(sl => sl.addEventListener('change', () => setAccess(sl.dataset.role, sl.value)));
+    $('t-access').querySelectorAll('[data-rm]').forEach(b => b.addEventListener('click', () => {
+      if (b.dataset.sure) setAccess(b.dataset.rm, ''); else { b.dataset.sure = 1; b.textContent = 'Click again to remove'; }
+    }));
+  } catch (e) { $('msg-access').className = 'msg bad'; $('msg-access').textContent = e.message; }
+}
+async function setAccess(email, role) {
+  const m = $('msg-access'); m.className = 'msg'; m.textContent = 'Saving…';
+  try { await rpc('admin_set_access', { p_email: email, p_role: role }); m.textContent = role ? email + ' can now sign in as ' + (role === 'operator' ? 'an operator.' : 'a client (read-only).') : email + ' was removed.'; loadAccess(); }
+  catch (e) { m.className = 'msg bad'; m.textContent = /BAD_EMAIL/.test(e.message) ? 'Please check the email address.' : /NOT_YOURSELF/.test(e.message) ? 'You can\'t change your own access.' : e.message; }
+}
+$('f-access').addEventListener('submit', e => { e.preventDefault(); setAccess($('ac-email').value.trim(), $('ac-role').value).then(() => { $('ac-email').value = ''; }); });
+
+/* ---------- go ---------- */
+if (!CFG.url || !CFG.key) { $('setup').hidden = false; }
+else if (sess) { rpc('admin_role').then(r => r ? start(r) : (saveSess(null), showSignin())).catch(() => showSignin()); }
+else showSignin();
+})();
+</script>
+</body>
+</html>
