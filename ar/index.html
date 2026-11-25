@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>What's Cooking? 2 · Banner AR</title>
+<meta name="theme-color" content="#0f3a7a">
+<script src="./vendor/aframe.min.js"></script>
+<script src="./vendor/mindar-image-aframe.prod.js"></script>
+<style>
+  @font-face{font-family:"KidsRock";src:url(assets/fonts/kidsrock.woff2) format("woff2");font-display:swap}
+  @font-face{font-family:"Fredoka";font-weight:300 700;src:url(assets/fonts/fredoka.woff2) format("woff2");font-display:swap}
+  :root{ --W:100vw; --H:100vh; --R:0deg; --ink:#141a33; --orange:#fdaa00; --orange2:#f08a00; --blue:#2f8cff; --panel:rgba(12,32,74,.92); }
+  *{box-sizing:border-box}
+  /* MindAR puts its camera <video> straight into <body>; the body must stay see-through */
+  html{background:#000;height:100%;margin:0}
+  body{margin:0;height:100%;overflow:hidden;background:transparent;color:#fff;
+    font-family:"Fredoka",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+  body > video{z-index:0 !important}
+  /* every button, card and message sits in #ui, which is turned to match how the phone is held (phones with auto-rotate off) */
+  #ui{position:fixed;left:50%;top:50%;width:var(--W);height:var(--H);transform:translate(-50%,-50%) rotate(var(--R));z-index:5;pointer-events:none}
+  #ui .card:not(.hide),#ui #jump:not(.hide),#ui #pad:not(.hide){pointer-events:auto}
+  a-scene{position:fixed!important;inset:0;z-index:1}
+  .card{position:fixed;z-index:10;left:50%;top:50%;transform:translate(-50%,-50%);width:min(calc(var(--W) * .92),560px);max-height:calc(var(--H) * .92);overflow:auto;
+    background:var(--panel);border:3px solid #fff;border-radius:26px;padding:20px 20px 18px;text-align:center;
+    box-shadow:0 14px 40px rgba(0,0,0,.45);transition:opacity .25s, transform .25s}
+  .card.hide{opacity:0;pointer-events:none;transform:translate(-50%,-46%) scale(.97)}
+  .card img.logo{width:min(70%,300px);display:block;margin:0 auto 6px}
+  .card h2{margin:6px 0 4px;font-size:21px;font-weight:700}
+  .card p{margin:4px 0 12px;font-size:15px;line-height:1.35;opacity:.92}
+  .chars{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:10px 0 14px}
+  .chars button{appearance:none;border:3px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);border-radius:16px;padding:6px 2px 4px;cursor:pointer;color:#fff;font-family:inherit;font-weight:600;font-size:min(10.5px,calc(var(--W) * .0235));line-height:1.1;letter-spacing:0;white-space:nowrap;overflow:hidden}
+  .chars button img{display:block;height:58px;width:100%;object-fit:contain;margin-bottom:3px;pointer-events:none}
+  .chars button[aria-pressed=true]{border-color:var(--orange);background:rgba(253,170,0,.22)}
+  .btn{appearance:none;display:inline-block;text-decoration:none;border:3px solid #fff;border-radius:999px;padding:13px 26px;font-size:18px;line-height:1;letter-spacing:.03em;color:#fff;cursor:pointer;
+    background:linear-gradient(#ffc23d,#f08a00);box-shadow:0 5px 0 #a35600,0 9px 18px rgba(0,0,0,.3);text-shadow:0 2px 0 rgba(120,50,0,.6)}
+  .btn:active{transform:translateY(3px);box-shadow:0 2px 0 #a35600}
+  .btn.blue{background:linear-gradient(#5ab4ff,#1f6fe0);box-shadow:0 5px 0 #0d3f8f,0 9px 18px rgba(0,0,0,.3);text-shadow:0 2px 0 rgba(0,30,90,.6)}
+  .btn.small{font-size:15px;padding:10px 18px}
+  .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:6px}
+  input.code{font-family:inherit;font-weight:600;font-size:20px;padding:10px 14px;border-radius:14px;border:2px solid #fff;width:200px;text-align:center;margin:4px 0 10px}
+  small.err{display:block;color:#ffb3a8;min-height:18px}
+  .hud{position:fixed;z-index:5;left:0;right:0;text-align:center;pointer-events:none}
+  #scan{top:50%;transform:translateY(-50%);display:none}
+  #scan.on{display:block}
+  #scan .frame{width:min(calc(var(--W) * .78),calc(var(--H) * 1.56));aspect-ratio:2/1;margin:0 auto;border:4px dashed rgba(255,255,255,.8);border-radius:18px;animation:pulse 1.6s ease-in-out infinite}
+  .land #sideways{display:none!important}
+  #scan b{display:inline-block;margin-top:12px;background:var(--panel);padding:8px 16px;border-radius:999px;font-size:16px}
+  @keyframes pulse{50%{opacity:.45;transform:scale(.985)}}
+  /* the prompt sits beside the JUMP button, like a speech bubble pointing at it */
+  /* one message spot, a little below the middle of the screen, so the character stays in view */
+  #say{left:0;right:0;top:64%;bottom:auto;text-align:center;opacity:0;transition:opacity .2s}
+  /* phone sideways: the banner fills the middle, so the message sits low, between MOVE and JUMP, clear of the run */
+  .land #say{top:auto;left:calc(16px + var(--jb) * 2 + 20px);right:calc(16px + var(--jb) + 20px);bottom:calc(16px + var(--jb) * .28 + env(safe-area-inset-bottom))}
+  #say.on{opacity:1}
+  #say span{position:relative;display:inline-block;font-size:clamp(15px,3.2vmin,21px);line-height:1;color:#fff;padding:7px 14px;border-radius:999px;
+    background:rgba(12,32,74,.78);border:2px solid rgba(255,255,255,.9);box-shadow:0 3px 10px rgba(0,0,0,.3)}
+  #say.center span{background:linear-gradient(rgba(255,194,61,.92),rgba(240,138,0,.92));text-shadow:0 2px 0 rgba(120,50,0,.6)}
+  /* the JUMP button: bottom right, the same round orange button as the game */
+  :root{--jb:clamp(74px,16vmin,104px)}
+  #jump{position:fixed;z-index:6;right:calc(16px + env(safe-area-inset-right));bottom:calc(16px + env(safe-area-inset-bottom));width:var(--jb);height:var(--jb);
+    padding:0;border:0;opacity:.88;background:url(assets/jump-btn.webp) center/contain no-repeat;cursor:pointer;touch-action:manipulation;-webkit-touch-callout:none;transition:transform .08s, opacity .2s}
+  #jump b{position:absolute;left:0;right:0;top:-1.45em;text-align:center;font:400 clamp(14px,3vmin,18px)/1 "KidsRock","Fredoka",sans-serif;letter-spacing:.06em;color:#fff;text-shadow:0 2px 3px rgba(0,0,0,.6)}
+  #jump.hide{opacity:0;pointer-events:none}
+  #jump.down{transform:scale(.9);background-image:url(assets/jump-btn-on.webp)}
+  #jump.hint{animation:jb 0.8s ease-in-out infinite}
+  @keyframes jb{50%{transform:scale(1.12);filter:drop-shadow(0 0 14px #ffd04d)}}
+  /* MOVE: back and forward buttons, bottom left, the game's blue buttons */
+  #pad{position:fixed;z-index:6;opacity:.88;left:calc(16px + env(safe-area-inset-left));bottom:calc(16px + env(safe-area-inset-bottom));display:flex;gap:10px;transition:opacity .2s}
+  #pad.hide{opacity:0;pointer-events:none}
+  #pad b{position:absolute;left:0;right:0;top:-1.45em;text-align:center;font:400 clamp(14px,3vmin,18px)/1 "KidsRock","Fredoka",sans-serif;letter-spacing:.06em;color:#fff;text-shadow:0 2px 3px rgba(0,0,0,.6)}
+  #pad button{width:var(--jb);height:var(--jb);padding:0;border:0;background:center/contain no-repeat;cursor:pointer;touch-action:none;-webkit-touch-callout:none;transition:transform .08s}
+  #left{background-image:url(assets/left-btn.webp)!important} #left.down{background-image:url(assets/left-btn-on.webp)!important;transform:scale(.9)}
+  #right{background-image:url(assets/right-btn.webp)!important} #right.down{background-image:url(assets/right-btn-on.webp)!important;transform:scale(.9)}
+  #right.hint{animation:jb 0.8s ease-in-out infinite}
+  #sayL{left:calc(16px + var(--jb) * 2 + 26px + env(safe-area-inset-left));right:auto;bottom:calc(18px + var(--jb) * .32 + env(safe-area-inset-bottom));text-align:left;opacity:0;transition:opacity .2s}
+  #sayL.on{opacity:1}
+  #sayL span{position:relative;display:inline-block;font-size:clamp(17px,3.6vmin,24px);line-height:1;color:#fff;padding:9px 16px;border-radius:999px;background:var(--panel);border:3px solid #fff;box-shadow:0 4px 12px rgba(0,0,0,.35)}
+  #sayL span::after{content:"";position:absolute;left:-12px;top:50%;margin-top:-8px;border:8px solid transparent;border-right:10px solid #fff;border-left:0}
+  .port #sayL{left:calc(12px + env(safe-area-inset-left));bottom:calc(16px + var(--jb) + 2.4em + env(safe-area-inset-bottom))}
+  .port #sayL span::after{left:calc(var(--jb) * 1.5 - 4px);top:auto;bottom:-12px;margin:0;border:8px solid transparent;border-top:10px solid #fff;border-bottom:0}
+  #sayL span,#pad b{font-family:"KidsRock","Fredoka",sans-serif;font-weight:400;letter-spacing:.04em}
+  /* stars collected, top left */
+  #stars{top:calc(12px + env(safe-area-inset-top));left:calc(12px + env(safe-area-inset-left));right:auto;text-align:left;display:none}
+  #stars.on{display:block}
+  #stars span{display:inline-flex;align-items:center;gap:6px;background:var(--panel);border:2px solid #fff;border-radius:999px;padding:4px 12px 4px 6px;font-weight:700;font-size:18px;line-height:1}
+  #stars img{width:26px;height:26px}
+  #stars.pop span{animation:pop .35s ease-out}
+  @keyframes pop{40%{transform:scale(1.25)}}
+  #say.bounce span{animation:none}
+  @keyframes bounce{50%{transform:translateY(-8px) scale(1.04)}}
+  #timer{top:calc(12px + env(safe-area-inset-top));display:none}
+  #timer.on{display:block}
+  #timer span{background:var(--panel);border:2px solid #fff;border-radius:999px;padding:6px 14px;font-weight:700;font-size:18px;line-height:1}
+  #warn{color:#ffd0c8;font-size:14px;min-height:0}
+  #dbg{position:fixed;left:6px;bottom:4px;z-index:20;font-size:10px;opacity:.5;pointer-events:none}
+  .big{font:400 36px/1.05 "KidsRock","Fredoka",sans-serif;margin:6px 0 2px;color:#ffd04d;text-shadow:0 3px 0 rgba(0,0,0,.35)}
+  #over img.hero{height:110px;display:block;margin:0 auto -4px}
+  .card h2{font-family:"KidsRock","Fredoka",sans-serif;font-weight:400;letter-spacing:.02em}
+  #say span,.btn{font-family:"KidsRock","Fredoka",sans-serif;font-weight:400;letter-spacing:.04em}
+  /* phones held sideways: everything on one screen */
+  .short .card{padding:12px 16px 12px;border-radius:20px}
+  .short .card img.logo{width:150px;margin-bottom:0}
+  .short .card h2{font-size:17px;margin:2px 0}
+  .short .chars{grid-template-columns:repeat(10,minmax(0,1fr));gap:5px;margin:6px 0 10px}
+  .short .chars button{padding:4px 1px 3px;font-size:min(8.5px,calc(var(--W) * .011));border-radius:12px}
+  .short .chars button img{height:40px}
+  .short .card p{font-size:13px;margin:2px 0 8px}
+  .short #over img.hero{height:70px}
+  .short .big{font-size:28px}
+  .short .btn{padding:11px 22px;font-size:16px}
+</style>
+</head>
+<body>
+<div id="ui">
+
+<div id="lock" class="card hide">
+  <img class="logo" src="assets/title.webp" alt="What's Cooking? 2: The Fridge Is Full">
+  <h2>Preview</h2>
+  <p>Enter the passcode you were sent.</p>
+  <form id="codeForm"><input class="code" id="code" autocomplete="off" inputmode="text"><br>
+  <button class="btn small" type="submit">Enter</button></form>
+  <small class="err" id="codeErr"></small>
+</div>
+
+<div id="gate" class="card hide">
+  <img class="logo" src="assets/title.webp" alt="What's Cooking? 2: The Fridge Is Full">
+  <h2>Pick your character</h2>
+  <div class="chars" id="chars" role="group" aria-label="Characters"></div>
+  <button class="btn" id="start" type="button">Start camera</button>
+  <p style="margin:12px 0 0;font-size:13.5px">Point your phone at the banner. Use ◀ ▶ to move and JUMP to jump: collect the stars, squash the ant and reach the finish.</p>
+  <div id="warn"></div>
+</div>
+
+<div id="over" class="card hide">
+  <img class="hero" id="overHero" alt="">
+  <div class="big">You made it!</div>
+  <p id="overTime"></p>
+  <div class="row"><a class="btn" id="playGame" href="#">PLAY THE FULL GAME</a></div>
+  <div class="row" style="margin-top:12px"><button class="btn blue small" id="again" type="button">Run again</button></div>
+</div>
+
+<div class="hud" id="scan"><div class="frame"></div><b>Point at the banner</b><br><small id="sideways" style="display:inline-block;margin-top:8px;background:var(--panel);padding:5px 12px;border-radius:999px">Tip: hold your phone sideways for a bigger view</small></div>
+<div class="hud" id="say"><span id="sayText"></span></div>
+<button id="jump" class="hide" type="button" aria-label="Jump"><b>JUMP</b></button>
+<div id="pad" class="hide"><b>MOVE</b><button id="left" type="button" aria-label="Move back"></button><button id="right" type="button" aria-label="Move forward"></button></div>
+<div class="hud" id="sayL"><span id="sayLText"></span></div>
+<div class="hud" id="stars"><span><img src="assets/star.webp" alt="">Stars <b id="starN">0/3</b></span></div>
+<div class="hud" id="timer"><span id="timerText">0.0s</span></div>
+<div id="dbg"></div>
+</div>
+
+<script>
+/* Phones with auto-rotate switched off keep the page upright even when the phone is turned sideways.
+   The motion sensor tells us how the phone is really held, and #ui is turned to match,
+   so MOVE, JUMP and the messages always sit the right way up. Phones that do rotate are left alone. */
+(function () {
+  const root = document.documentElement;
+  const iOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  let held = 0, timer = null;
+  const screenAngle = () => {
+    const a = (screen.orientation && typeof screen.orientation.angle === 'number') ? screen.orientation.angle
+            : (typeof window.orientation === 'number' ? window.orientation : 0);
+    return ((a % 360) + 360) % 360;
+  };
+  function layout() {
+    const r = ((held - screenAngle()) % 360 + 360) % 360;
+    const turn = (r === 90 || r === 270) ? r : 0;
+    const side = turn !== 0, W = side ? innerHeight : innerWidth, H = side ? innerWidth : innerHeight;
+    root.style.setProperty('--W', W + 'px'); root.style.setProperty('--H', H + 'px'); root.style.setProperty('--R', turn + 'deg');
+    root.classList.toggle('land', W > H); root.classList.toggle('port', W <= H); root.classList.toggle('short', H <= 520);
+  }
+  const later = ms => { clearTimeout(timer); timer = setTimeout(layout, ms); };
+  addEventListener('devicemotion', e => {
+    const g = e.accelerationIncludingGravity; if (!g || g.x == null || g.y == null) return;
+    let x = g.x, y = g.y; if (iOS) { x = -x; y = -y; }          /* iPhones report the opposite way round */
+    let h = held;
+    if (Math.abs(x) > 4.5 && Math.abs(x) > Math.abs(y) * 1.4) h = x > 0 ? 90 : 270;
+    else if (Math.abs(y) > 4.5 && Math.abs(y) > Math.abs(x) * 1.4) h = 0;
+    if (h !== held) { held = h; later(650); }                  /* wait a moment: a phone that does rotate will have turned the page by then */
+  });
+  addEventListener('resize', () => later(120));
+  addEventListener('orientationchange', () => later(300));
+  if (screen.orientation && screen.orientation.addEventListener) screen.orientation.addEventListener('change', () => later(300));
+  window.askMotion = () => { try { if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') DeviceMotionEvent.requestPermission().catch(() => {}); } catch (e) {} };
+  layout();
+})();
+</script>
+<script>
+(() => {
+'use strict';
+/* ===================== settings ===================== */
+const SET = {
+  passcode: '',                                                  /* '' = no passcode screen */
+  game: '../?src=billboard',
+  target: 'targets/banner.mind',      /* the final 6 m x 2 m banner (9 Nov) */
+  version: '11',
+  /* the run course: where the printed shelves are on the banner (0..1 across, 0..1 down; v = top of the shelf).
+     Measured from the final 6 m x 2 m artwork (3:1, trimmed at the crop marks) */
+  course: { aspect: 1 / 3, startU: 0.39, finishU: 0.918, charH: 0.26, ledges: [
+    { u0: 0.354, u1: 0.573, v: 0.882 }, { u0: 0.574, u1: 0.706, v: 0.741 },
+    { u0: 0.708, u1: 0.839, v: 0.601 }, { u0: 0.841, u1: 0.983, v: 0.461 } ] },
+  speed: 0.16,       /* board widths a second (0.105 felt slow) */
+  jump: 0.56, gravity: 1.45,
+  /* stars: across (u) and height above the shelf (in character heights). One on shelf 1, two on shelf 3;
+     the last one sits high, so it takes a jump to get it */
+  stars: [{ u: 0.47, up: 0.55 }, { u: 0.742, up: 0.55 }, { u: 0.765, up: 1.2 }],
+  /* the ant walks up and down shelf 2 */
+  ant: { from: 0.625, to: 0.685, speed: 0.035, size: 0.6 }
+};
+const CHAR_ORDER = ['carrot', 'avocado', 'cheese', 'mustard', 'ketchup', 'lasagna', 'mayo', 'milk', 'pickle', 'sriracha'];
+const $ = id => document.getElementById(id);
+const track = window.TFIF_TRACK || ((e, d) => console.log('[track]', e, d || {}));
+const THREE = AFRAME.THREE;
+const C = SET.course, A = C.aspect, CH = C.charH * A;        /* character height in board widths */
+const LED = C.ledges.map(L => ({ ...L, top: (1 - L.v) * A }));
+const KS = A / 0.5;     /* movement was tuned on a 2:1 board; this keeps it the same relative to the character */
+let META = null, pick = null;
+try { pick = localStorage.getItem('gba-char'); } catch (e) {}
+
+/* ===================== sound ===================== */
+let AC = null;
+const clips = {};
+function audio() {
+  if (AC) return; try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
+  for (const k of ['fanfare', 'cheer']) fetch('assets/snd/snd-' + k + '.mp3').then(r => r.arrayBuffer()).then(b => AC.decodeAudioData(b)).then(d => { clips[k] = d; }).catch(() => {});
+}
+function play(k, vol = 0.8, at = 0) {
+  if (!AC || !clips[k]) return; const s = AC.createBufferSource(), g = AC.createGain(); g.gain.value = vol;
+  s.buffer = clips[k]; s.connect(g).connect(AC.destination); s.start(AC.currentTime + at);
+}
+function blip(f0 = 420, f1 = 880, dur = 0.16, vol = 0.18, type = 'square') {
+  if (!AC) return; const o = AC.createOscillator(), g = AC.createGain(), t = AC.currentTime;
+  o.type = type; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  o.connect(g).connect(AC.destination); o.start(t); o.stop(t + dur + 0.02);
+}
+
+/* ===================== character picker ===================== */
+function buildPicker() {
+  const box = $('chars');
+  box.innerHTML = CHAR_ORDER.map(k => `<button type="button" data-k="${k}" aria-pressed="${k === pick}"><img src="assets/chars/${k}-select.webp" alt="">${k === 'mustard' ? 'MUSTARD' : META[k].name}</button>`).join('');
+  box.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+    pick = b.dataset.k; try { localStorage.setItem('gba-char', pick); } catch (e) {}
+    box.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b)); blip(500, 900, 0.1, 0.12);
+  }));
+  if (!pick || !META[pick]) { pick = 'carrot'; box.querySelector('[data-k=carrot]').setAttribute('aria-pressed', 'true'); }
+}
+
+/* ===================== the scene ===================== */
+let scene, target, hero, heroMat, shadow, confetti = [];
+const STARS = [], ANT = { m: null, x: 0, dir: -1, dead: -1 };
+const tex = {};
+const loader = new THREE.TextureLoader();
+function T(src) {
+  if (!tex[src]) { const t = loader.load(src); if (THREE.SRGBColorSpace) t.colorSpace = THREE.SRGBColorSpace; t.generateMipmaps = false; t.minFilter = THREE.LinearFilter; tex[src] = t; }
+  return tex[src];
+}
+/* each character is one picture strip: the run frames, then idle, jump and fall, in equal cells */
+function frames(k) {
+  const m = META[k], src = 'assets/chars/' + k + '-sheet.webp?v=' + SET.version, w = m.cw / m.h, n = m.cells;
+  const cell = i => ({ src, w, i, n });
+  return { run: Array.from({ length: m.run }, (_, i) => cell(i)), idle: cell(m.run), jump: cell(m.run + 1), fall: cell(m.run + 2) };
+}
+let F = null;
+function buildScene() {
+  document.body.insertAdjacentHTML('beforeend', `
+    <a-scene mindar-image="imageTargetSrc: ${SET.target}?v=${SET.version}; autoStart: false; uiScanning: no; uiLoading: no; uiError: no; filterMinCF: 0.0001; filterBeta: 0.004; missTolerance: 8; warmupTolerance: 3"
+      color-space="sRGB" renderer="colorManagement: true; alpha: true" vr-mode-ui="enabled: false" xr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+      <a-entity id="target" mindar-image-target="targetIndex: 0"></a-entity>
+    </a-scene>`);
+  scene = document.querySelector('a-scene');
+  target = $('target');
+  target.addEventListener('targetFound', onFound);
+  target.addEventListener('targetLost', onLost);
+  const root = new THREE.Group(); target.object3D.add(root);
+  /* the character: a picture on a flat card, standing on its feet */
+  const geo = new THREE.PlaneGeometry(1, 1); geo.translate(0, 0.5, 0);
+  heroMat = new THREE.MeshBasicMaterial({ transparent: true, alphaTest: 0.05, depthWrite: false, side: THREE.DoubleSide });
+  hero = new THREE.Mesh(geo, heroMat); hero.renderOrder = 3; hero.visible = false; root.add(hero);
+  const sg = new THREE.CircleGeometry(0.5, 28);
+  shadow = new THREE.Mesh(sg, new THREE.MeshBasicMaterial({ color: 0x001030, transparent: true, opacity: 0.32, depthWrite: false }));
+  shadow.renderOrder = 2; shadow.visible = false; root.add(shadow);
+  /* stars and the ant */
+  const sGeo = new THREE.PlaneGeometry(1, 1);
+  for (const s of SET.stars) {
+    const m = new THREE.Mesh(sGeo, new THREE.MeshBasicMaterial({ map: T('assets/star.webp'), transparent: true, alphaTest: 0.05, depthWrite: false, side: THREE.DoubleSide }));
+    m.renderOrder = 3; m.visible = false; root.add(m); STARS.push({ ...s, m, got: false, t: 0 });
+  }
+  const aGeo = new THREE.PlaneGeometry(1, 1); aGeo.translate(0, 0.5, 0);
+  ANT.m = new THREE.Mesh(aGeo, new THREE.MeshBasicMaterial({ map: T('assets/ant.webp'), transparent: true, alphaTest: 0.05, depthWrite: false, side: THREE.DoubleSide }));
+  ANT.m.renderOrder = 3; ANT.m.visible = false; root.add(ANT.m);
+  /* confetti for the finish */
+  const cols = [0xffd04d, 0xfd4d00, 0x2f8cff, 0x2ecc71, 0xff5fa2, 0xffffff];
+  for (let i = 0; i < 70; i++) {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(0.012, 0.007), new THREE.MeshBasicMaterial({ color: cols[i % cols.length], side: THREE.DoubleSide, transparent: true }));
+    m.visible = false; m.renderOrder = 4; root.add(m); confetti.push({ m, v: new THREE.Vector3(), r: new THREE.Vector3() });
+  }
+  scene.addEventListener('arReady', () => { watchRotation(); }, { once: true });
+  scene.addEventListener('arError', () => { $('warn').textContent = 'The camera could not start. Check the browser has permission to use it.'; showGate(); });
+}
+/* board (u across, height up in board widths) -> the tracked picture's space (centre 0,0; width 1) */
+const bx = u => u - 0.5, by = h => h - A / 2;
+function setFrame(fr, flip = false) {
+  const t = T(fr.src);
+  if (heroMat.map !== t) { heroMat.map = t; heroMat.needsUpdate = true; }
+  t.repeat.set(1 / fr.n, 1); t.offset.set(fr.i / fr.n, 0);
+  hero.scale.set(CH * fr.w * (flip ? -1 : 1) * R.sx, CH * R.sy, 1);
+}
+
+/* ===================== the run ===================== */
+const R = { phase: 'idle', x: 0, h: 0, vy: 0, on: 0, t: 0, anim: 0, sx: 1, sy: 1, waitT: 0, started: 0, time: 0, tracked: false, landT: 9 };
+function say(txt, bounce = false, center = false) { $('sayText').textContent = txt; $('say').classList.toggle('on', !!txt); $('say').classList.toggle('bounce', bounce); $('say').classList.toggle('center', center); }
+function hint(on) { $('jump').classList.toggle('hint', !!on); }
+let SL = false;   /* the MOVE reminder uses the same message spot */
+function sayL(txt) { if (txt) { say(txt); SL = true; } else if (SL) { if (/^Hold/.test($('sayText').textContent)) say(''); SL = false; } }
+function hintL(on) { $('right').classList.toggle('hint', !!on); }
+let starN = 0;
+function showStars() { $('starN').textContent = starN + '/' + STARS.length; }
+function reset() {
+  Object.assign(R, { phase: 'drop', x: C.startU, h: LED[0].top + 0.16 * KS, vy: 0, on: -1, t: 0, sx: 1, sy: 1, waitT: 0, idleT: 0, time: 0, landT: 9, bumpT: 0,
+    antHint: false, squashed: false, started: 0, face: 1, moved: false });
+  confetti.forEach(c => (c.m.visible = false));
+  STARS.forEach(s => { s.got = false; s.t = 0; s.m.visible = true; s.m.material.opacity = 1; });
+  Object.assign(ANT, { x: SET.ant.to, dir: -1, dead: -1 }); ANT.m.visible = true; ANT.m.material.opacity = 1;
+  starN = 0; showStars(); $('stars').classList.add('on');
+  hero.visible = true; shadow.visible = true; $('timer').classList.remove('on'); say(''); sayL('');
+  $('jump').classList.remove('hide'); $('pad').classList.remove('hide'); hint(false); hintL(false);
+}
+function ledgeUnder(x) { for (let i = LED.length - 1; i >= 0; i--) if (x >= LED[i].u0 - 0.004 && x <= LED[i].u1 + 0.004) return i; return 0; }
+/* held buttons */
+const K = { left: false, right: false };
+function start() { if (R.started) return; R.started = performance.now(); $('timer').classList.add('on'); say('GO!', false, true); setTimeout(() => { if ($('sayText').textContent === 'GO!') say(''); }, 700); blip(600, 1200, 0.2, 0.15); }
+function tap() {
+  if (!R.tracked) return;
+  if ((R.phase === 'run' || R.phase === 'ready') && R.on >= 0) {
+    if (R.phase === 'ready') { R.phase = 'run'; start(); }
+    R.vy = SET.jump * KS; R.on = -1; blip(380, 980, 0.17); hint(false);
+    if (!/ant/i.test($('sayText').textContent)) say('');
+    track('jump');
+  }
+}
+function step(dt) {
+  R.anim += dt; R.landT += dt;
+  const halfW = CH * 0.18;
+  if (R.phase === 'ready') {
+    R.t += dt;
+    if (R.t > 0.3 && !SL) { sayL('Hold ▶ to move forward'); hintL(true); }
+    if (K.right || K.left) { R.phase = 'run'; start(); }
+  }
+  if (R.phase === 'run') {
+    R.time = (performance.now() - R.started) / 1000; $('timerText').textContent = R.time.toFixed(1) + 's';
+    R.bumpT = Math.max(0, R.bumpT - dt);
+    let dir = (K.right ? 1 : 0) - (K.left ? 1 : 0);
+    if (R.bumpT > 0) dir = R.bumpT > 0.25 ? -0.35 : 0;      /* knocked back by the ant */
+    else if (dir) R.face = dir;
+    if (dir && !R.moved) { R.moved = true; sayL(''); hintL(false); }
+    let nx = R.x + dir * SET.speed * KS * dt;
+    /* a step up in the way: stop at it and ask for a jump */
+    const i = ledgeUnder(R.x), nxt = LED[i + 1];
+    let atWall = false;
+    if (dir > 0 && nxt && nx + halfW > nxt.u0 && R.h < nxt.top - 0.002) { nx = Math.min(nx, nxt.u0 - halfW); atWall = R.on >= 0; }
+    nx = Math.max(nx, LED[0].u0 + halfW);
+    R.waitT = atWall ? R.waitT + dt : 0;
+    if (R.waitT > 0.3 && $('sayText').textContent !== 'Press JUMP!') { say('Press JUMP!'); hint(true); }
+    /* standing still for a while: remind them how to move */
+    R.idleT = dir || R.on < 0 ? 0 : R.idleT + dt;
+    if (R.idleT > 3 && !atWall && !SL) { sayL('Hold ▶ to move forward'); hintL(true); }
+    if (dir > 0 && SL) { sayL(''); hintL(false); }
+    R.walking = Math.abs(nx - R.x) > 1e-6 && R.bumpT <= 0;
+    R.x = nx;
+    if (R.x >= C.finishU && R.on === LED.length - 1) finish();
+  }
+  if (R.phase === 'drop' || R.phase === 'run' || R.phase === 'done') {
+    /* walking off the end of a shelf: fall to the one below */
+    if (R.on >= 0 && ledgeUnder(R.x) !== R.on) R.on = -1;
+    /* falling and landing */
+    if (R.on < 0) {
+      const prevH = R.h; R.vy -= SET.gravity * KS * dt; R.h += R.vy * dt;
+      if (R.vy < 0) {
+        const i = ledgeUnder(R.x), L = LED[i];
+        if (prevH >= L.top - 0.0001 && R.h <= L.top) { R.h = L.top; R.vy = 0; R.on = i; R.landT = 0; blip(220, 140, 0.08, 0.1, 'triangle');
+          if (R.phase === 'drop') { R.phase = 'ready'; R.t = 0; } }   /* dropped in from above: now wait for the player */
+        else if (R.h < L.top) { R.h = L.top; R.vy = 0; R.on = i; R.landT = 0; }
+      }
+    }
+  }
+  stepThings(dt);
+  if (R.phase === 'done') { R.t += dt; if (R.on >= 0 && R.t < 2.6 && R.anim % 0.6 < dt) { R.vy = 0.32 * KS; R.on = -1; } }
+  /* squash when landing, a little stretch in the air */
+  const sq = R.landT < 0.3 ? 0.18 * Math.exp(-R.landT * 12) * Math.cos(R.landT * 30) : 0;
+  R.sx = 1 + sq; R.sy = 1 - sq + (R.on < 0 ? Math.min(0.08, Math.abs(R.vy) * 0.1) : 0);
+  let fr;
+  if (R.on < 0) fr = R.vy > 0 ? F.jump : F.fall;
+  else if (R.phase === 'run' && R.walking) fr = F.run[Math.floor(R.anim * 18) % F.run.length];
+  else fr = F.idle;
+  setFrame(fr, R.face < 0);
+  if (R.on >= 0 && !(R.phase === 'run' && R.walking)) hero.scale.y *= 1 + Math.sin(R.anim * 5) * 0.015;
+  hero.position.set(bx(R.x), by(R.h), 0.004);
+  const L = LED[ledgeUnder(R.x)], air = Math.max(0, R.h - L.top);
+  shadow.position.set(bx(R.x), by(L.top) + 0.002, 0.003);
+  const s = Math.max(0.3, 1 - air * 6); shadow.scale.set(CH * 0.55 * s, CH * 0.07 * s, 1);
+  /* confetti */
+  for (const c of confetti) if (c.m.visible) {
+    c.v.y -= 0.35 * dt; c.v.multiplyScalar(1 - 0.9 * dt);
+    c.m.position.addScaledVector(c.v, dt); c.m.rotation.x += c.r.x * dt; c.m.rotation.y += c.r.y * dt; c.m.rotation.z += c.r.z * dt;
+    if (c.m.position.y < -A / 2 - 0.05) c.m.visible = false;
+  }
+}
+function hit(ax0, ax1, ay0, ay1) {   /* the character's box against another box (board units) */
+  const hw = CH * 0.2; return R.x + hw > ax0 && R.x - hw < ax1 && R.h + CH * 0.95 > ay0 && R.h < ay1;
+}
+function stepThings(dt) {
+  /* stars: spin, bob and get collected */
+  for (const s of STARS) {
+    const L = LED[ledgeUnder(s.u)], cy = L.top + s.up * CH, r = CH * 0.19;
+    s.t += dt;
+    if (!s.got) {
+      s.m.position.set(bx(s.u), by(cy + Math.sin(s.t * 3 + s.u * 20) * CH * 0.04), 0.006);
+      s.m.scale.set(r * 2 * Math.max(0.15, Math.abs(Math.cos(s.t * 2.2))), r * 2, 1);
+      if (R.phase === 'run' && hit(s.u - r, s.u + r, cy - r, cy + r)) {
+        s.got = true; s.t = 0; starN++; showStars(); blip(880, 1760, 0.12, 0.14, 'triangle'); setTimeout(() => blip(1320, 2640, 0.1, 0.1, 'triangle'), 70);
+        $('stars').classList.remove('pop'); void $('stars').offsetWidth; $('stars').classList.add('pop'); track('star', { n: starN });
+      }
+    } else if (s.m.visible) {   /* collected: float up and fade */
+      s.m.position.y += dt * 0.12; s.m.scale.multiplyScalar(1 + dt * 1.5); s.m.material.opacity = Math.max(0, 1 - s.t * 2.5);
+      if (s.t > 0.4) s.m.visible = false;
+    }
+  }
+  /* the ant on shelf 2 */
+  const L2 = LED[1], aH = CH * SET.ant.size, aW = aH * 213 / 256;
+  if (ANT.dead < 0) {
+    if (R.bumpT <= 0) {
+      ANT.x += ANT.dir * SET.ant.speed * KS * dt;
+      if (ANT.x < SET.ant.from) { ANT.x = SET.ant.from; ANT.dir = 1; } else if (ANT.x > SET.ant.to) { ANT.x = SET.ant.to; ANT.dir = -1; }
+    }
+    const t = R.anim;
+    ANT.m.position.set(bx(ANT.x), by(L2.top) + Math.abs(Math.sin(t * 14)) * aH * 0.05, 0.005);
+    ANT.m.scale.set(aW * (ANT.dir > 0 ? 1 : -1), aH, 1); ANT.m.rotation.z = Math.sin(t * 14) * 0.04;
+    /* tell them what to do as they get close */
+    if (!R.antHint && R.on === 1 && ANT.x - R.x < 0.14 * KS && ANT.x > R.x) { R.antHint = true; say('Jump on the ant!'); hint(true); }
+    if (R.phase === 'run') {
+      const top = L2.top + aH * 0.55;
+      /* coming down anywhere near it counts as landing on it (generous, so it feels good) */
+      /* a little help in the air: coming down near the ant, drift onto it */
+      if (R.on < 0 && R.vy < 0 && R.h < L2.top + aH * 1.6 && Math.abs(ANT.x - R.x) < 0.07 * KS) R.x += Math.sign(ANT.x - R.x) * Math.min(Math.abs(ANT.x - R.x), 0.09 * KS * dt);
+      const stomp = R.on < 0 && R.vy < 0 && Math.abs(R.x - ANT.x) < aW * 0.8 + CH * 0.15 && R.h < L2.top + aH * 1.3 && R.h > L2.top + aH * 0.15;
+      if (stomp || hit(ANT.x - aW * 0.38, ANT.x + aW * 0.38, L2.top, top)) {
+        if (stomp) {          /* landed on it: squashed */
+          ANT.dead = 0; R.vy = 0.42 * KS; R.on = -1; R.squashed = true; hint(false);
+          say('SQUASHED!', false, true); setTimeout(() => { if ($('sayText').textContent === 'SQUASHED!') say(''); }, 800);
+          blip(300, 60, 0.25, 0.2, 'sawtooth'); track('ant_squashed');
+        } else if (R.on >= 0 && R.bumpT <= 0) {           /* walked into it: a gentle bump back */
+          R.bumpT = 0.5; ANT.dir = 1; R.landT = 0.05; R.x = Math.min(R.x, ANT.x - aW * 0.38 - CH * 0.2);
+          say('Jump on the ant!'); hint(true); blip(160, 90, 0.15, 0.15, 'square'); track('ant_bump');
+        }
+      }
+    }
+  } else if (ANT.m.visible) {
+    ANT.dead += dt;
+    ANT.m.scale.set(aW * 1.3 * (ANT.dir > 0 ? 1 : -1), aH * 0.28, 1); ANT.m.position.y = by(L2.top);
+    ANT.m.material.opacity = Math.max(0, 1 - Math.max(0, ANT.dead - 0.5) * 2);
+    if (ANT.dead > 1.1) ANT.m.visible = false;
+  }
+  if (R.antHint && (R.on === 2 || ANT.dead >= 0) && $('sayText').textContent === 'Jump on the ant!') { say(''); hint(false); }
+}
+function finish() {
+  R.phase = 'done'; R.t = 0; say(''); sayL(''); hint(false); hintL(false); $('jump').classList.add('hide'); $('pad').classList.add('hide'); K.left = K.right = false;
+  const t = R.time; track('finish', { char: pick, secs: +t.toFixed(1), stars: starN, ant: R.squashed });
+  play('fanfare', 0.75); play('cheer', 0.6, 0.3);
+  const fx = bx(C.finishU), fy = by(LED[LED.length - 1].top + 0.13 * KS);
+  confetti.forEach((c, i) => { c.m.visible = true; c.m.position.set(fx + (Math.random() - 0.5) * 0.04, fy, 0.02 + Math.random() * 0.02);
+    const a = Math.random() * Math.PI * 2, sp = 0.18 + Math.random() * 0.28; c.v.set(Math.cos(a) * sp, Math.abs(Math.sin(a)) * sp + 0.12, (Math.random() - 0.2) * 0.25);
+    c.r.set(Math.random() * 9, Math.random() * 9, Math.random() * 9); });
+  setTimeout(() => {
+    $('overHero').src = 'assets/chars/' + pick + '-select.webp';
+    const got = starN === STARS.length ? `all ${STARS.length} stars` : `${starN} of ${STARS.length} stars`;
+    $('overTime').textContent = `${META[pick].name.toLowerCase().replace(/\b\w/g, c => c.toUpperCase())} reached the finish in ${t.toFixed(1)} seconds with ${got}${R.squashed ? ' and squashed the ant' : ''}. Now take on the full game: more stages, more stars, more critters, and the rankings.`;
+    $('over').classList.remove('hide'); $('timer').classList.remove('on'); $('stars').classList.remove('on');
+  }, 1700);
+}
+
+/* ===================== tracking ===================== */
+function onFound() {
+  R.tracked = true; $('scan').classList.remove('on'); track('target_found');
+  if (R.phase === 'idle') reset();
+  else if (R.phase === 'paused') { R.phase = R.was; R.started = performance.now() - R.time * 1000; say(''); $('jump').classList.remove('hide'); $('pad').classList.remove('hide'); }
+}
+function onLost() {
+  R.tracked = false; track('target_lost');
+  if (R.phase === 'done' || R.phase === 'idle') return;
+  if (R.phase !== 'paused') { R.was = R.phase; R.phase = 'paused'; }
+  $('scan').classList.add('on'); say(''); sayL(''); $('jump').classList.add('hide'); $('pad').classList.add('hide'); K.left = K.right = false;
+}
+let last = 0;
+function loop(t) {
+  const dt = Math.min(0.05, (t - (last || t)) / 1000); last = t;
+  if (F && R.phase !== 'idle' && R.phase !== 'paused') step(dt);
+  requestAnimationFrame(loop);
+}
+
+/* Turning the phone: the camera picture swaps between tall and wide, so the tracker is rebuilt for the new shape */
+function watchRotation() {
+  const sys = scene.systems['mindar-image-system'];
+  const v = sys.video; if (!v) return;
+  let wide = v.videoWidth > v.videoHeight, busy = false, again = false;
+  const check = async () => {
+    const w = v.videoWidth, h = v.videoHeight;
+    if (!w || !h || !sys.controller) return;
+    if ((w > h) === wide) { try { sys._resize(); } catch (e) {} return; }
+    if (busy) { again = true; return; }
+    busy = true; wide = w > h;
+    try {
+      sys.controller.stopProcessVideo();
+      await new Promise(r => setTimeout(r, 350));
+      try { sys.controller.dispose(); } catch (e) {}
+      v.setAttribute('width', w); v.setAttribute('height', h);
+      await sys._startAR();
+      track('rotated', { wide });
+    } catch (e) { $('dbg').textContent = 'Turn: ' + String(e && e.message || e).slice(0, 100); }
+    busy = false; if (again) { again = false; check(); }
+  };
+  v.addEventListener('resize', check);
+  addEventListener('orientationchange', () => setTimeout(check, 400));
+  addEventListener('resize', () => setTimeout(check, 250));
+  setInterval(check, 1000);
+}
+
+/* ===================== screens ===================== */
+function showGate() { $('gate').classList.remove('hide'); }
+$('start').addEventListener('click', () => {
+  if (window.askMotion) window.askMotion();
+  audio(); F = frames(pick); T(F.idle.src);
+  const begin = () => {
+    try { scene.systems['mindar-image-system'].start(); $('gate').classList.add('hide'); $('scan').classList.add('on'); track('camera_start', { char: pick }); }
+    catch (err) { $('warn').textContent = 'Could not start the camera: ' + (err && err.message ? err.message : err); }
+  };
+  if (scene.hasLoaded) begin(); else scene.addEventListener('loaded', begin, { once: true });
+});
+$('again').addEventListener('click', e => { e.stopPropagation(); $('over').classList.add('hide'); track('run_again'); if (R.tracked) reset(); else { R.phase = 'idle'; $('scan').classList.add('on'); } });
+$('playGame').addEventListener('click', () => track('play_full_game', { char: pick }));
+$('playGame').href = SET.game + '&char=' + encodeURIComponent(pick || '');
+const jb = $('jump');
+jb.addEventListener('pointerdown', e => { e.preventDefault(); jb.classList.add('down'); tap(); });
+['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => jb.addEventListener(ev, () => jb.classList.remove('down')));
+jb.addEventListener('contextmenu', e => e.preventDefault());
+for (const d of ['left', 'right']) {
+  const b = $(d);
+  b.addEventListener('pointerdown', e => { e.preventDefault(); try { b.setPointerCapture(e.pointerId); } catch (x) {} K[d] = true; b.classList.add('down'); });
+  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(ev => b.addEventListener(ev, () => { K[d] = false; b.classList.remove('down'); }));
+  b.addEventListener('contextmenu', e => e.preventDefault());
+}
+window.addEventListener('keyup', e => { if (/^(ArrowRight|KeyD)$/.test(e.code)) K.right = false; if (/^(ArrowLeft|KeyA)$/.test(e.code)) K.left = false; });
+window.addEventListener('keydown', e => {
+  if (/^(Space|ArrowUp|KeyW)$/.test(e.code)) { e.preventDefault(); tap(); }
+  if (/^(ArrowRight|KeyD)$/.test(e.code)) K.right = true;
+  if (/^(ArrowLeft|KeyA)$/.test(e.code)) K.left = true;
+});
+window.addEventListener('error', e => { if (e && e.message) $('dbg').textContent = String(e.message).slice(0, 120); });
+
+fetch('assets/chars/chars.json?v=' + SET.version).then(r => r.json()).then(m => {
+  META = m; buildPicker(); buildScene();
+  $('chars').addEventListener('click', () => { $('playGame').href = SET.game + '&char=' + encodeURIComponent(pick); });
+  $('playGame').href = SET.game + '&char=' + encodeURIComponent(pick);
+  let ok = false; try { ok = sessionStorage.getItem('gba-ok') === '1'; } catch (e) {}
+  if (SET.passcode && !ok) {
+    $('lock').classList.remove('hide');
+    $('codeForm').addEventListener('submit', ev => { ev.preventDefault();
+      if ($('code').value.trim().toLowerCase() === SET.passcode.toLowerCase()) { try { sessionStorage.setItem('gba-ok', '1'); } catch (e) {} $('lock').classList.add('hide'); showGate(); }
+      else $('codeErr').textContent = 'That is not the passcode'; });
+  } else showGate();
+  track('session_start');
+  requestAnimationFrame(loop);
+}).catch(e => { $('dbg').textContent = 'Could not load: ' + e.message; });
+})();
+</script>
+</body>
+</html>
